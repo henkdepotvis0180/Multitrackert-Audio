@@ -1,5 +1,7 @@
 Windows 10/11 x64 CPU-installer. Download de `.exe` en voer die uit; Python, FFmpeg en de drie lokale modellen zijn inbegrepen. Na installatie opent de website op deze computer. Voor deze editie hoef je geen losse Python-pakketten of modelbestanden te installeren.
 
+Versie 0.3.1 verhelpt Windows-conflicten bij het bijwerken van `status.json` (`WinError 5`). Gelijktijdige schrijvers wachten op elkaar; statuslezers houden het bestand niet meer onnodig geblokkeerd. Tijdelijke blokkades worden kort opnieuw geprobeerd. Een geblokkeerde status van een oude opdracht verhindert geen nieuwe upload. Met **Download foutlog** kun je een lokale ZIP met diagnostiek opslaan, zonder je opnames.
+
 Updates vervangen de oude programmabestanden. Opnames, audio, MP4 en ZIP staan buiten de installatiemap en blijven ook bij de-installatie bewaard. Gebruik “Open lokale opslagmap” of “Open lokale uitvoermap” om ze terug te vinden na een afgebroken browserdownload.
 
 De build controleert op native Windows: echte modellen, de bevroren app en subprocessen, MP4 → muziek-/sprekertracks → ZIP, een hervatbare download, installatie, opnieuw installeren en verwijderen met behoud van data. Dit is nog geen test op jouw eigen Windows-pc.

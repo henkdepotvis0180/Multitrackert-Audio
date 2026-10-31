@@ -134,7 +134,6 @@ def test_status_writers_in_separate_processes_are_serialized(tmp_path):
     import subprocess
 
     path = tmp_path / "status.json"
-    atomic_json(path, {"step": -1})
     code = 'from pathlib import Path; import sys; from multitrack.state import atomic_json; p=Path(sys.argv[1]); [atomic_json(p,{"writer":sys.argv[2],"step":i}) for i in range(20)]'
     processes = [
         subprocess.Popen(

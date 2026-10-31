@@ -19,9 +19,8 @@ def json_write_lock(path):
     with lock:
         # Serialize writers across processes too. Readers remain non-blocking.
         with (path.parent / ("." + path.name + ".lock")).open("a+b") as f:
-            if os.fstat(f.fileno()).st_size == 0:
-                f.write(b"0")
-                f.flush()
+            # Windows byte-range locks also work beyond EOF. Keep the lockfile
+            # empty so two first-time writers cannot race while initializing it.
             deadline = time.monotonic() + 5
             while True:
                 try:
