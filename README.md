@@ -6,7 +6,9 @@ computer.** Alleen de eenmalige installatie/modeldownload heeft internet nodig.
 
 ## Nieuw in 0.3: Windows-installer en lokale opslag
 
-**[Windows-installers en bouwstatus op GitHub](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases)**
+**[Download Windows CPU-installer 0.3.0 (.exe, circa 615 MB)](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/download/v0.3.0/Multitrackert-Audio-Setup-0.3.0-CPU-x64.exe)**
+
+[Release, checksum en FFmpeg-broncode](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/tag/v0.3.0). De Windows-installatie-, update- en gegevensbehoudcontroles zijn geslaagd; de gepubliceerde download is op SHA-256 gecontroleerd.
 
 De Windows CPU-installer bevat Python, FFmpeg en de modellen. Eenmalig de `.exe`
 installeren; daarna opent de lokale website en zijn geen losse pip-/modelinstallaties

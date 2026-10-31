@@ -127,3 +127,17 @@ De installer is CPU-only en niet digitaal ondertekend. De controle gebruikt een
 GitHub-hosted Windows-machine, geen schone eigen Windows-pc zonder reeds aanwezige
 Microsoft-runtime. CUDA blijft via de broninstallatie beschikbaar en is niet op een
 GPU getest. De kwaliteitsgrenzen van muziek-/radio-/stemmenscheiding blijven gelden.
+
+### Bevestigde Windows-release 0.3.0
+
+De [native Windows-workflow](https://github.com/henkdepotvis0180/Multitrackert-Audio/actions/runs/41221439336)
+is volledig geslaagd en heeft de Windows CPU-installer gepubliceerd. Dit omvat de
+Windows-testsuite, echte gebundelde modellen, frozen verwerkingsprocessen, ZIP en
+HTTP Range, installatie, een lopende app bijwerken, oude binaries verwijderen en
+mediachecksums na update én de-installatie behouden. De installer en checksum staan
+bij [release v0.3.0](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/tag/v0.3.0).
+
+Een latere optimalisatie laat onnodige C++-ontwikkelheaders weg en gebruikt snellere
+verliesloze installercompressie. De compacte verpakking is ook lokaal als echte
+standalone-app met modellen en verwerkingssubprocessen getest. Bestaande gepubliceerde
+releasebestanden worden nooit stilzwijgend overschreven.

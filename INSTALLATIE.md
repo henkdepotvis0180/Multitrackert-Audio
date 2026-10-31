@@ -7,8 +7,8 @@ De website installeert niets automatisch.
 
 ## Windows: alleen een installer downloaden
 
-Open [GitHub Releases](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases)
-en download de `.exe` van de nieuwste succesvol gebouwde Windows CPU-preview. De
+Download de **[Windows CPU-installer 0.3.0](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/download/v0.3.0/Multitrackert-Audio-Setup-0.3.0-CPU-x64.exe)** (circa 615 MB).
+Andere versies vind je bij [GitHub Releases](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases). De
 installer bevat Python, FFmpeg, de bibliotheken en alle drie modellen. Je hoeft de
 losse commando’s hieronder dan niet uit te voeren. Verschijnt er nog geen `.exe`,
 dan is de Windows-build nog niet geslaagd. De installer is niet digitaal ondertekend.
