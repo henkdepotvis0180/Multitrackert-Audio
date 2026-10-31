@@ -1,17 +1,73 @@
 import json
 import os
+import sys
+import tempfile
 import time
 from pathlib import Path
 
 
 def atomic_json(path: Path, value: dict):
-    tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(value, ensure_ascii=False, indent=2), encoding="utf-8")
-    os.replace(tmp, path)
+    # Every writer owns its temp file. Readers may poll while another process writes.
+    tmp = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix="." + path.name + ".",
+            suffix=".tmp",
+            delete=False,
+        ) as f:
+            tmp = Path(f.name)
+            json.dump(value, f, ensure_ascii=False, indent=2)
+        for attempt in range(12):
+            try:
+                os.replace(tmp, path)
+                return
+            except OSError as e:
+                # Windows scanners and legacy readers can briefly deny replacement.
+                if getattr(e, "winerror", None) not in {5, 32, 33} or attempt == 11:
+                    raise
+                time.sleep(min(0.25, 0.02 * 2**attempt))
+    finally:
+        if tmp is not None:
+            tmp.unlink(missing_ok=True)
+
+
+def open_shared_text(path: Path, errors="strict"):
+    if sys.platform != "win32":
+        return path.open(encoding="utf-8", errors=errors)
+    import ctypes
+    import msvcrt
+    from ctypes import wintypes
+
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.CreateFileW.argtypes = [
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.HANDLE,
+    ]
+    kernel.CreateFileW.restype = wintypes.HANDLE
+    kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+    # FILE_SHARE_DELETE is essential: a JSON reader must not lock out atomic updates.
+    handle = kernel.CreateFileW(str(path), 0x80000000, 1 | 2 | 4, None, 3, 0x80, None)
+    if handle == ctypes.c_void_p(-1).value:
+        raise ctypes.WinError(ctypes.get_last_error())
+    try:
+        fd = msvcrt.open_osfhandle(handle, os.O_RDONLY | os.O_BINARY)
+    except BaseException:
+        kernel.CloseHandle(handle)
+        raise
+    return os.fdopen(fd, "r", encoding="utf-8", errors=errors)
 
 
 def read_json(path: Path):
-    return json.loads(path.read_text(encoding="utf-8"))
+    with open_shared_text(path) as f:
+        return json.load(f)
 
 
 class Progress:

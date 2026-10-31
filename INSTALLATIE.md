@@ -126,3 +126,11 @@ Stop de server vóór installatie en start hem erna opnieuw, zodat de nieuwe
 bibliotheken worden ingeladen. Internet is alleen voor installatie/download nodig;
 je MP4 wordt niet naar een modelhost verstuurd. Windows/macOS-commando's zijn
 beschreven, maar alleen Linux-installatie en browserflow zijn hier gevalideerd.
+
+## 0.3.1 — Windows-correctie
+
+Gebruik de 0.3.1-installer zodra die bij Releases staat om de fout rond het vervangen
+van `status.json` te verhelpen. Sluit eerst de oude app. Installeer over de huidige
+installer-versie heen: dezelfde app wordt bijgewerkt, bestaande projectdata blijft
+bewaard. Geen nieuwe modelversies of losse Python-installaties nodig. Bij een blijvende
+fout kun je op de website **Download foutlog** gebruiken; daarin zit geen audio/video.

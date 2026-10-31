@@ -307,3 +307,21 @@ licenties die commercieel gebruik toestaan; er is geen abonnement of verwerkings
 Modeldownloads gaan via de officiële bronnen en blijven buiten Git. Behoud de
 licentieteksten/notices bij herdistributie. FFmpeg wordt apart geïnstalleerd; de
 LGPL/GPL-verplichtingen hangen af van die build. Zie [bronnen en licenties](docs/THIRD_PARTY.md).
+
+## Update 0.3.1: Windows-statusbestand en foutlogs
+
+Deze update verhelpt een reproduceerbare Windows-bestandsvergrendeling bij
+`status.tmp → status.json`: statuslezers staan nu atomisch vervangen toe, schrijvers
+hebben unieke tijdelijke bestanden en tijdelijke Windows-vergrendelingen krijgen
+begrensde herhaalpogingen. Echte blijvende toegangsproblemen blijven een fout geven;
+er worden geen rechten omzeild en geen bestaande audiobestanden verwijderd.
+
+De website heeft **Download foutlog**. Dit ZIP bevat technische logregels, versies
+en lokale paden, geen audio/video en geen procesomgeving. Het wordt niet automatisch
+naar iemand verstuurd. Deel het alleen als je hulp nodig hebt.
+
+Een nieuwe installer gebruikt dezelfde installatie-ID en vervangt de oude geïnstalleerde
+app. Historische Python-versies opnieuw verpakken als installer is niet nodig voor
+opruimen of logs. Onbekende bronmappen worden niet automatisch gewist, omdat daarin
+projecten of andere gebruikersbestanden kunnen staan. Je bestaande standaarddatamap
+wordt hergebruikt; complete audio-/video-exports blijven behouden.

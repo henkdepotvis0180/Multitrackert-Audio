@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import math
 import re
 import shutil
@@ -12,12 +13,13 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from . import config
+from .diagnostics import log_bundle
 from .diarize import model_ready
 from .hardware import inspect_hardware
 from .installation import installation_status
@@ -45,10 +47,13 @@ class Jobs:
         for folder in root.iterdir():
             if folder.is_dir() and (folder / "status.json").is_file():
                 if read_json(folder / "status.json")["state"] not in TERMINAL:
-                    atomic_json(
-                        folder / "status.json",
-                        {"state": "interrupted", "message": "Server herstart. Upload opnieuw."},
-                    )
+                    try:
+                        atomic_json(
+                            folder / "status.json",
+                            {"state": "interrupted", "message": "Server herstart. Upload opnieuw."},
+                        )
+                    except OSError:
+                        logging.exception("Statusbestand tijdelijk niet beschikbaar: %s", folder)
 
     def reserve(self):
         with self.lock:
@@ -82,18 +87,24 @@ class Jobs:
         finally:
             log.close()
 
+        process = self.process
+
         def wait():
-            self.process.wait()
-            status = read_json(folder / "status.json")
-            if status["state"] not in TERMINAL:
-                atomic_json(
-                    folder / "status.json",
-                    {
-                        "state": "error",
-                        "message": "Worker gestopt. Bekijk worker.log in je lokale datamap.",
-                    },
-                )
-            self.release()
+            try:
+                process.wait()
+                status = read_json(folder / "status.json")
+                if status["state"] not in TERMINAL:
+                    atomic_json(
+                        folder / "status.json",
+                        {
+                            "state": "error",
+                            "message": "Worker gestopt. Download het foutlog of open de lokale projectmap.",
+                        },
+                    )
+            except OSError:
+                logging.exception("Status opslaan mislukt; worker log staat in %s", folder)
+            finally:
+                self.release()
 
         threading.Thread(target=wait, daemon=True).start()
 
@@ -186,6 +197,15 @@ def create_app(data=None):
             "version": __version__,
             "desktop": getattr(sys, "frozen", False),
         }
+
+    @app.get("/api/diagnostics")
+    async def diagnostics(request: Request):
+        content = await asyncio.to_thread(log_bundle, request.app.state.jobs.root.parent)
+        return Response(
+            content,
+            media_type="application/zip",
+            headers={"Content-Disposition": 'attachment; filename="multitrackert-foutlogs.zip"'},
+        )
 
     @app.get("/api/storage")
     async def storage(request: Request):
