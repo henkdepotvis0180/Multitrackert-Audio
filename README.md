@@ -4,6 +4,14 @@ Lokale MP4-verwerking met een tijdlijn per spreker, behoud van achtergrondgeluid
 optionele muziekscheiding en een instelbare Premiere-export. **Opnames blijven op je
 computer.** Alleen de eenmalige installatie/modeldownload heeft internet nodig.
 
+## Nieuw in 0.2.1: installatie per versie
+
+**[Wat moet ik per versie installeren? → INSTALLATIE.md](INSTALLATIE.md)**
+
+De website toont nu de actieve versie en een installatiecheck met commando’s voor
+Windows, Linux/macOS en CPU/NVIDIA. Versie 0.2.1 gebruikt dezelfde dependencies en
+modellen als 0.2.0; voor deze update zijn geen nieuwe modeldownloads nodig.
+
 ## Nieuw in 0.2: muziek behouden of radio weglaten
 
 De eerste versie exporteerde alleen herkende spreekmomenten. Daardoor ontbrak geluid

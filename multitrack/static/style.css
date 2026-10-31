@@ -249,3 +249,21 @@ details {
 summary {
   cursor: pointer;
 }
+.install-item {
+  padding: 16px 0;
+  border-bottom: 1px solid #354351;
+}
+.install-item p {
+  margin: 6px 0;
+}
+pre {
+  background: #0d141b;
+  padding: 12px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.85rem;
+}
+#installation-panel a {
+  color: #82e3b8;
+}

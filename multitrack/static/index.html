@@ -20,6 +20,51 @@
       <section id="system" aria-live="polite">
         Hardware en modellen controleren…
       </section>
+      <section id="installation-panel">
+        <h2>Versie &amp; installatie</h2>
+        <p id="app-version">Versie controleren…</p>
+        <details id="installation-details">
+          <summary>Wat moet ik voor deze versie installeren?</summary>
+          <p class="hint">
+            Dit overzicht controleert je huidige installatie. Voer de getoonde
+            commando’s uit in een terminal in de projectmap. Stop de server vóór
+            installatie en start hem daarna opnieuw. De website installeert of
+            downloadt niets automatisch.
+          </p>
+          <div class="options">
+            <label
+              >Commando’s voor<select id="install-os">
+                <option value="windows">Windows (PowerShell)</option>
+                <option value="posix">Linux (Ubuntu/Debian)</option>
+                <option value="mac">macOS (Apple Silicon, CPU)</option>
+              </select></label
+            >
+            <label
+              >Extra audiomodellen gebruiken op<select id="install-device">
+                <option value="cpu">CPU — geen NVIDIA nodig</option>
+                <option value="cuda">
+                  NVIDIA — geschikte CUDA 12.8-driver nodig
+                </option>
+              </select></label
+            >
+          </div>
+          <div id="installation-checks" aria-live="polite"></div>
+          <p class="hint">
+            De basismodellen zijn verplicht. PyTorch, het muziekmodel en de
+            stemmenscheider zijn optioneel; voor de radio-/muziekfuncties heb je
+            ze wel nodig. Bestaande modellen hoef je bij een gewone code-update
+            niet opnieuw te downloaden.
+          </p>
+          <p>
+            <a
+              href="https://github.com/henkdepotvis0180/Multitrackert-Audio/blob/main/INSTALLATIE.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Installatie en updates per versie op GitHub (internet)</a
+            >
+          </p>
+        </details>
+      </section>
       <section>
         <h2>1. Kies je opname</h2>
         <form id="upload-form">
@@ -200,8 +245,9 @@
         </p>
       </section>
       <footer>
-        Multitrackert Audio · versie 0.2 · Sprekerherkenning is geen bewijs van
-        identiteit.
+        Multitrackert Audio ·
+        <span id="footer-version">versie controleren…</span> · Sprekerherkenning
+        is geen bewijs van identiteit.
       </footer>
     </main>
   </body>

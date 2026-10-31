@@ -20,6 +20,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from . import config
 from .diarize import model_ready
 from .hardware import inspect_hardware
+from .installation import installation_status
 from .music import ready as music_ready
 from .remix import configure_mix
 from .separate import ready
@@ -160,6 +161,7 @@ def create_app(data=None):
         hardware = await asyncio.to_thread(inspect_hardware)
         return {
             **hardware,
+            "installation": installation_status(hardware["ffmpeg"], hardware["cuda_available"]),
             "models_ready": model_ready(config.MODELS),
             "separation_ready": ready(config.MODELS),
             "music_ready": music_ready(config.MODELS),

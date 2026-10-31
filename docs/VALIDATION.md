@@ -85,3 +85,16 @@ spraakfixture via `scripts/download_test_audio.py` en voer `python -m pytest -q`
 Bij ontbrekende runtime, modellen of fixture worden de betreffende tests overgeslagen;
 een run met skips bewijst dus niet dat echte modelinferentie is getest. Zie ook
 `scripts/browser_smoke.py --help` voor de browsercontrole.
+
+## Aanvulling 0.2.1: installatieoverzicht
+
+Deze patch verandert de audioverwerking of dependencies niet. De 6 bestaande
+API-tests zijn geslaagd. Het package is gebouwd en gecontroleerd op versie 0.2.1
+en aanwezigheid van de installatiecode en websitebestanden. De versie komt nu uit
+één bron (`multitrack.__version__`) voor package en website.
+
+Chromium-controles: juiste actieve versie, zes installatiechecks, aanwezige en
+ontbrekende onderdelen, Windows-/Linux-/macOS-commando's, CPU-/CUDA-keuze en mobiel
+formaat. Ontbrekende modellen openen het overzicht; aanwezige modellen worden niet
+opnieuw als vereiste download aangeboden. Geen JavaScript-fouten. Dit valideert de
+weergave van de commando's, niet installatie op Windows/macOS of een GPU-machine.

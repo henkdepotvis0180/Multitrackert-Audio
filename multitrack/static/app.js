@@ -4,6 +4,7 @@ let current = null,
   timer = null,
   busy = false;
 let initialOptions = true;
+let installation = null;
 const headers = { "X-Multitrack": "local" };
 const terminal = new Set(["done", "error", "cancelled", "interrupted"]);
 function seconds(n) {
@@ -23,9 +24,77 @@ async function api(url, options = {}) {
 function error(e) {
   $("error").textContent = e.message;
 }
+function renderInstallation() {
+  if (!installation) return;
+  const platform = $("install-os").value;
+  const gpu = $("install-device");
+  gpu.querySelector('[value="cuda"]').disabled = platform === "mac";
+  if (platform === "mac") gpu.value = "cpu";
+  $("app-version").textContent =
+    `Je draait versie ${installation.version}. ${installation.update_note}`;
+  $("footer-version").textContent = `versie ${installation.version}`;
+  $("installation-checks").replaceChildren();
+  for (const check of installation.checks) {
+    const needsCuda =
+      check.id === "audio_runtime" &&
+      gpu.value === "cuda" &&
+      !installation.cuda_available;
+    const installed = check.installed && !needsCuda;
+    const item = document.createElement("div");
+    item.className = "install-item";
+    const title = document.createElement("strong");
+    title.textContent = `${installed ? "✓" : "○"} ${check.name}`;
+    const state = document.createElement("p");
+    state.className = installed ? "hint" : "warning";
+    state.textContent = installed
+      ? "Aanwezig — niet opnieuw nodig."
+      : check.required
+        ? "Ontbreekt — nodig voor de basis."
+        : "Nog nodig voor deze optionele functie.";
+    const detail = document.createElement("p");
+    detail.className = "hint";
+    detail.textContent =
+      check.detail +
+      (needsCuda
+        ? " NVIDIA/CUDA is nog niet beschikbaar. Controleer ook de GPU en driver; CPU blijft mogelijk."
+        : "");
+    let command = check[platform] || check.posix;
+    if (gpu.value === "cuda" && command.includes("/whl/cpu")) {
+      command = command
+        .replace("/whl/cpu", "/whl/cu128")
+        .replace("-m pip install ", "-m pip install --force-reinstall ");
+    }
+    const code = document.createElement("pre");
+    code.textContent = command;
+    item.append(title, state, detail);
+    if (installed) {
+      const more = document.createElement("details"),
+        summary = document.createElement("summary");
+      summary.textContent = "Toon installatiecommando";
+      more.append(summary, code);
+      item.append(more);
+    } else item.append(code);
+    $("installation-checks").append(item);
+  }
+}
+$("install-os").value = /Win/i.test(navigator.userAgent)
+  ? "windows"
+  : /Mac/i.test(navigator.userAgent)
+    ? "mac"
+    : "posix";
+$("install-os").onchange = renderInstallation;
+$("install-device").onchange = renderInstallation;
 async function system() {
   try {
     const s = await api("/api/system");
+    installation = s.installation;
+    renderInstallation();
+    if (
+      initialOptions &&
+      installation?.checks.some((c) => c.required && !c.installed)
+    ) {
+      $("installation-details").open = true;
+    }
     $("system").textContent =
       `CPU: ${s.cpu_threads} threads · ${s.inference_threads} modelthreads · ${s.ram_available_gb} GB RAM vrij · Herkenning: CPU · Scheiding: ${s.separation_device === "cuda" ? s.gpu + " (CUDA)" : "CPU"} · Modellen: ${s.models_ready ? "gereed" : "ontbreken"}`;
     if (!s.models_ready)
