@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Multitrackert Audio — lokaal</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <span class="badge">● LOKALE VERWERKING</span>
+        <h1>Van gesprek naar<br />losse audiotracks.</h1>
+        <p>
+          Upload een MP4 vanaf je computer. Bekijk wie wanneer spreekt en neem
+          de volledige tijdlijn mee naar je editor.
+        </p>
+      </header>
+      <section id="system" aria-live="polite">
+        Hardware en modellen controleren…
+      </section>
+      <section>
+        <h2>1. Kies je opname</h2>
+        <form id="upload-form">
+          <label class="drop"
+            >MP4-bestand<input
+              id="file"
+              type="file"
+              accept=".mp4,video/mp4"
+              required
+            /><span id="file-info"
+              >Maximaal 60 minuten. Mono of stereo.</span
+            ></label
+          >
+          <div class="options">
+            <label
+              >Aantal sprekers<select id="speakers">
+                <option value="0">Automatisch herkennen</option>
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+                <option>6</option>
+                <option>7</option>
+                <option>8</option>
+                <option>9</option>
+                <option>10</option>
+                <option>11</option>
+                <option>12</option>
+              </select></label
+            >
+            <label
+              >Scheiding uitvoeren op<select id="device">
+                <option value="auto">Automatisch (GPU indien bruikbaar)</option>
+                <option value="cpu">CPU forceren</option>
+              </select></label
+            >
+            <label class="check"
+              ><input id="separate" type="checkbox" disabled /> Overlappende
+              stemmen scheiden (experimenteel)</label
+            >
+          </div>
+          <p class="hint">
+            Herkenning maakt sprekertracks met stilte op de juiste plekken.
+            Zonder geslaagde scheiding blijft bij overlap dezelfde mix op
+            meerdere tracks staan. Scheiding ondersteunt twee stemmen tegelijk,
+            vraagt schone referenties en verlaagt de audiobandbreedte naar 8
+            kHz.
+          </p>
+          <button id="start" disabled>Analyse starten</button>
+        </form>
+        <p id="error" role="alert"></p>
+      </section>
+      <section id="progress-section" hidden aria-live="polite">
+        <div class="row">
+          <h2 id="phase">Verwerken</h2>
+          <button id="cancel" class="secondary">Annuleren</button>
+        </div>
+        <progress id="progress" max="1" value="0"></progress>
+        <p id="progress-text"></p>
+        <p id="eta" class="hint"></p>
+      </section>
+      <section id="result" hidden>
+        <div class="row">
+          <h2>2. Bekijk de tijdlijn</h2>
+          <a id="download" class="button">Download ZIP</a>
+        </div>
+        <p id="summary"></p>
+        <p class="hint">
+          Klik op de tijdlijn om het origineel op die positie af te spelen.
+          Sprekerlabels zijn schattingen; luister ze na. De audioplayers spelen
+          de volledige losse tracks vanaf tijdstip 0.
+        </p>
+        <video id="video" controls preload="metadata"></video>
+        <div id="tracks"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fragment</th>
+                <th>Spreker</th>
+                <th>Start</th>
+                <th>Einde</th>
+                <th>Afspelen</th>
+              </tr>
+            </thead>
+            <tbody id="segments"></tbody>
+          </table>
+        </div>
+        <p class="hint">
+          Pak de ZIP uit. Plaats video.mp4 en iedere speakers/*.wav op het begin
+          van een aparte track. De stilte houdt alles synchroon. Importeer
+          original.wav alleen als referentie. Premiere: probeer timeline.xml
+          (eventueel media opnieuw koppelen). Clipchamp: plaats de WAVs
+          handmatig op 0.
+        </p>
+      </section>
+      <section>
+        <h2>Eerdere opdrachten op dit apparaat</h2>
+        <div id="history"></div>
+        <p class="hint">
+          Bestanden worden lokaal bewaard tot je ze verwijdert. Geen
+          cloudopslag, externe scripts of tracking. Eenmalige modelinstallatie
+          heeft internet nodig; de verwerking daarna niet. Laat deze server
+          alleen op je eigen computer draaien.
+        </p>
+      </section>
+      <footer>
+        Multitrackert Audio · versie 0.1 · Sprekerherkenning is geen bewijs van
+        identiteit.
+      </footer>
+    </main>
+  </body>
+</html>
