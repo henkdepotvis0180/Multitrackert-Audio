@@ -101,3 +101,63 @@ def extract(source: Path, folder: Path, info: dict):
         common
         + ["-map", f"0:{info['video_stream']}", "-an", "-c:v", "copy", str(folder / "video.mp4")]
     )
+
+
+def make_analysis(source, destination):
+    run(
+        [
+            "ffmpeg",
+            "-nostdin",
+            "-v",
+            "error",
+            "-y",
+            "-i",
+            str(source),
+            "-ac",
+            "1",
+            "-ar",
+            "16000",
+            "-c:a",
+            "pcm_f32le",
+            str(destination),
+        ]
+    )
+
+
+def decode_reference(source, destination, rate):
+    raw = json.loads(
+        run(
+            ["ffprobe", "-v", "error", "-show_format", "-show_streams", "-of", "json", str(source)],
+            timeout=30,
+        )
+    )
+    if not any(s["codec_type"] == "audio" for s in raw["streams"]):
+        raise MediaError("Referentiebestand bevat geen audio.")
+    duration = float(raw["format"].get("duration", 0))
+    if not 1 <= duration <= 1800:
+        raise MediaError("Radio-referentie moet tussen 1 seconde en 30 minuten duren.")
+    run(
+        [
+            "ffmpeg",
+            "-nostdin",
+            "-v",
+            "error",
+            "-y",
+            "-protocol_whitelist",
+            "file,pipe",
+            "-i",
+            str(source),
+            "-map",
+            "0:a:0",
+            "-vn",
+            "-ac",
+            "1",
+            "-ar",
+            str(rate),
+            "-c:a",
+            "pcm_f32le",
+            "-rf64",
+            "auto",
+            str(destination),
+        ]
+    )

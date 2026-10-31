@@ -216,3 +216,36 @@ footer {
     display: none;
   }
 }
+label,
+details {
+  min-width: 0;
+  max-width: 100%;
+}
+select,
+input[type="number"] {
+  max-width: 100%;
+}
+#mix-mode,
+#reference-offset {
+  width: 100%;
+}
+input[type="file"] {
+  max-width: 100%;
+}
+input[type="number"] {
+  display: block;
+  background: #101821;
+  color: #e8edf2;
+  padding: 9px;
+  border: 1px solid #4a6174;
+  border-radius: 6px;
+}
+details {
+  margin: 18px 0;
+  padding: 14px;
+  border: 1px solid #354351;
+  border-radius: 8px;
+}
+summary {
+  cursor: pointer;
+}

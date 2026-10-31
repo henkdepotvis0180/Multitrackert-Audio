@@ -69,3 +69,45 @@ def test_completed_job_download_and_safe_media(tmp_path):
     with TestClient(create_app(tmp_path)) as client:
         assert client.get("/api/jobs/" + "a" * 32 + "/download").content == b"ZIP"
         assert client.get("/api/jobs/" + "a" * 32 + "/media/worker.log").status_code == 404
+
+
+def test_reference_upload_cancel_and_error_cleanup(tmp_path, monkeypatch):
+    import multitrack.app as module
+
+    monkeypatch.setattr(module, "model_ready", lambda _: True)
+    with TestClient(create_app(tmp_path)) as client:
+        h = {"X-Multitrack": "local"}
+        response = client.post("/api/jobs?reference=true", headers=h, content=b"video")
+        assert response.status_code == 202
+        ident = response.json()["id"]
+        assert client.get(f"/api/jobs/{ident}").json()["state"] == "awaiting_reference"
+        assert (
+            client.post(f"/api/jobs/{ident}/reference", headers=h, content=b"").status_code == 422
+        )
+        assert client.get(f"/api/jobs/{ident}").json()["state"] == "error"
+        second = client.post("/api/jobs?reference=true", headers=h, content=b"video").json()["id"]
+        assert client.post(f"/api/jobs/{second}/cancel", headers=h).status_code == 200
+        assert client.get(f"/api/jobs/{second}").json()["state"] == "cancelled"
+        assert client.delete(f"/api/jobs/{second}", headers=h).status_code == 200
+
+
+def test_music_missing_model_is_explicit(tmp_path, monkeypatch):
+    import multitrack.app as module
+
+    monkeypatch.setattr(module, "model_ready", lambda _: True)
+    monkeypatch.setattr(module, "music_ready", lambda _: False)
+    with TestClient(create_app(tmp_path)) as client:
+        assert (
+            client.post(
+                "/api/jobs?music=true", content=b"video", headers={"X-Multitrack": "local"}
+            ).status_code
+            == 503
+        )
+        assert (
+            client.post(
+                "/api/jobs?reference_offset=nan",
+                content=b"video",
+                headers={"X-Multitrack": "local"},
+            ).status_code
+            == 422
+        )

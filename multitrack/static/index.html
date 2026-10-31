@@ -62,12 +62,56 @@
               stemmen scheiden (experimenteel)</label
             >
           </div>
+          <label class="check">
+            <input id="music" type="checkbox" disabled />
+            Muziek apart zetten (Hybrid Demucs; extra model nodig)
+          </label>
+          <p id="music-status" class="hint"></p>
+          <details>
+            <summary>
+              Radio inclusief zang verminderen met een referentiebestand
+            </summary>
+            <p class="hint">
+              Kies exact dezelfde opname/versie van het nummer dat op de radio
+              speelde. De vergelijking gebeurt lokaal. De geschatte radio komt
+              op een aparte, standaard gedempte track. Zonder passende
+              referentie kan de tool de zanger niet betrouwbaar van de
+              vergaderstemmen onderscheiden.
+            </p>
+            <label
+              >Origineel radiogeluid / muziekbestand (optioneel)
+              <input
+                id="reference"
+                type="file"
+                accept=".wav,.mp3,.flac,.m4a,.mp4,audio/*"
+              />
+            </label>
+            <label
+              >Start van dit referentiebestand op de vergadertijdlijn, in
+              seconden (leeg = automatisch)
+              <input
+                id="reference-offset"
+                type="number"
+                step="0.001"
+                min="-3600"
+                max="3600"
+                placeholder="Bijv. -30 als de opname midden in het nummer begint"
+              />
+            </label>
+            <p class="hint">
+              Automatisch zoeken gebruikt de eerste 90 seconden. Een negatieve
+              start betekent dat het muziekbestand eerder begon dan de opname.
+              Gebruik alleen een referentie die je zelf mag gebruiken.
+              Afwijkende masters, radiojingles, vervorming, galm en klokdrift
+              kunnen resten of spraaklekkage geven.
+            </p>
+          </details>
           <p class="hint">
             Herkenning maakt sprekertracks met stilte op de juiste plekken.
-            Zonder geslaagde scheiding blijft bij overlap dezelfde mix op
-            meerdere tracks staan. Scheiding ondersteunt twee stemmen tegelijk,
-            vraagt schone referenties en verlaagt de audiobandbreedte naar 8
-            kHz.
+            Achtergrond en niet-toegewezen geluid worden altijd bewaard. Zonder
+            geslaagde scheiding wordt bij overlap de mix over de actieve tracks
+            verdeeld. Stemmenscheiding ondersteunt twee stemmen tegelijk, vraagt
+            schone referenties en verlaagt de audiobandbreedte naar 8 kHz.
           </p>
           <button id="start" disabled>Analyse starten</button>
         </form>
@@ -88,12 +132,39 @@
           <a id="download" class="button">Download ZIP</a>
         </div>
         <p id="summary"></p>
+        <p id="processing-note" class="hint"></p>
         <p class="hint">
           Klik op de tijdlijn om het origineel op die positie af te spelen.
           Sprekerlabels zijn schattingen; luister ze na. De audioplayers spelen
           de volledige losse tracks vanaf tijdstip 0.
         </p>
         <video id="video" controls preload="metadata"></video>
+        <h3>3. Kies wat je in Premiere wilt horen</h3>
+        <label
+          >Exportkeuze
+          <select id="mix-mode">
+            <option value="remove_radio" selected>
+              Volledige radio weglaten (muziek + aangewezen radiostemmen)
+            </option>
+            <option value="keep_all">Alles behouden, inclusief muziek</option>
+            <option value="remove_music">
+              Alleen instrumentale muziek weglaten (zang blijft mogelijk)
+            </option>
+            <option value="remove_vocals">
+              Alleen aangewezen radiostem/zang weglaten (muziek behouden)
+            </option>
+          </select>
+        </label>
+        <p class="hint">
+          Voor radio/zang: beluister hieronder de stemtracks en vink de
+          radiostemmen aan. Een artiest wordt niet automatisch op naam herkend.
+          Als radio en vergadering samen op een track staan, verwijder je die
+          samen: kies die track dan niet en probeer een betere analyse met
+          stemmenscheiding. Niet-herkende zang kan ook in achtergrond/rest
+          blijven zitten. Controleer het resultaat.
+        </p>
+        <button id="mix-button">Gekozen mix en Premiere-export maken</button>
+        <p id="mix-note" class="hint"></p>
         <div id="tracks"></div>
         <div class="table-wrap">
           <table>
@@ -111,10 +182,11 @@
         </div>
         <p class="hint">
           Pak de ZIP uit. Plaats video.mp4 en iedere speakers/*.wav op het begin
-          van een aparte track. De stilte houdt alles synchroon. Importeer
-          original.wav alleen als referentie. Premiere: probeer timeline.xml
-          (eventueel media opnieuw koppelen). Clipchamp: plaats de WAVs
-          handmatig op 0.
+          van een aparte track. Voeg ook background.wav en, indien aanwezig,
+          music.wav toe. Laat radio.wav uit om de geschatte radio weg te laten.
+          De stilte houdt alles synchroon. Importeer original.wav alleen als
+          referentie. Premiere: probeer timeline.xml (eventueel media opnieuw
+          koppelen). Clipchamp: plaats de WAVs handmatig op 0.
         </p>
       </section>
       <section>
@@ -128,7 +200,7 @@
         </p>
       </section>
       <footer>
-        Multitrackert Audio · versie 0.1 · Sprekerherkenning is geen bewijs van
+        Multitrackert Audio · versie 0.2 · Sprekerherkenning is geen bewijs van
         identiteit.
       </footer>
     </main>

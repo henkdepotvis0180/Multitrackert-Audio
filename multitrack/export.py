@@ -12,13 +12,16 @@ import numpy as np
 import soundfile as sf
 from scipy.signal import resample_poly
 
+from .audio import writer as audio_writer
 from .diarize import Embedder, intervals
 from .separate import Separator, assign_sources
 
 BLOCK = 262144
 
 
-def write_region(source, writers, start, stop, active, replacements=None, progress=None):
+def write_region(
+    source, writers, background, start, stop, active, replacements=None, progress=None
+):
     source.seek(start)
     for offset in range(start, stop, BLOCK):
         if progress:
@@ -28,15 +31,21 @@ def write_region(source, writers, start, stop, active, replacements=None, progre
         if len(original) < n:
             original = np.pad(original, ((0, n - len(original)), (0, 0)))
         silence = np.zeros_like(original)
+        total = np.zeros_like(original)
         for speaker, writer in writers.items():
-            samples = original if speaker in active else silence
+            # A mixed overlap is shared rather than duplicated at full volume.
+            samples = original / len(active) if speaker in active else silence
             if replacements and speaker in replacements:
                 mono = replacements[speaker][offset - start : offset - start + n]
                 samples = np.repeat(mono[:, None], source.channels, axis=1)
             writer.write(samples)
+            total += samples
+        background.write(original - total)
 
 
-def render(folder, info, segments, analysis, models, hardware, separate, progress):
+def render(
+    folder, info, segments, analysis, models, hardware, separate, progress, source_path=None
+):
     output = folder / "export"
     output.mkdir()
     tracks = output / "speakers"
@@ -58,8 +67,9 @@ def render(folder, info, segments, analysis, models, hardware, separate, progres
                 refs[speaker] = embed(np.concatenate(clean)[:160000])
         separator = Separator(models, hardware["separation_device"])
     overlap = []
-    with sf.SoundFile(folder / "original.wav") as original:
+    with sf.SoundFile(source_path or folder / "original.wav") as original:
         frames = len(original)
+        background = audio_writer(output / "background.wav", rate, original.channels, frames)
         writers = {
             s: sf.SoundFile(
                 tracks / f"speaker_{s:02}.wav",
@@ -117,7 +127,9 @@ def render(folder, info, segments, analysis, models, hardware, separate, progres
                             reason = "Stemtoewijzing onzeker; originele mix behouden."
                     elif separate and len(active) == 2:
                         reason = "Geen voldoende lange, schone referentie voor beide stemmen; mix behouden."
-                    write_region(original, writers, start, stop, active, replacements, progress)
+                    write_region(
+                        original, writers, background, start, stop, active, replacements, progress
+                    )
                     if len(active) > 1:
                         overlap.append(
                             {
@@ -131,10 +143,11 @@ def render(folder, info, segments, analysis, models, hardware, separate, progres
         finally:
             for writer in writers.values():
                 writer.close()
+            background.close()
     return output, overlap
 
 
-def timeline_xml(output, info, speakers):
+def timeline_xml(output, info, speakers, extra_tracks=(), disabled_speakers=()):
     """FCP7 interchange for Premiere. Editors may require relinking relative paths."""
     rate = Fraction(info["fps"]) if info["fps"] != "0/0" else Fraction(25)
     timebase = round(float(rate))
@@ -149,8 +162,9 @@ def timeline_xml(output, info, speakers):
     ET.SubElement(r, "ntsc").text = str(ntsc).upper()
     media = ET.SubElement(seq, "media")
 
-    def clip(track, name, path, ident, audio=False):
+    def clip(track, name, path, ident, audio=False, enabled=True):
         item = ET.SubElement(track, "clipitem", id=f"clip-{ident}")
+        ET.SubElement(item, "enabled").text = str(enabled).upper()
         for key, val in [
             ("name", name),
             ("duration", length),
@@ -190,16 +204,29 @@ def timeline_xml(output, info, speakers):
             f"speakers/speaker_{speaker:02}.wav",
             str(speaker),
             True,
+            speaker not in disabled_speakers,
+        )
+    for track in extra_tracks:
+        clip(
+            ET.SubElement(audio, "track"),
+            track["name"],
+            track["file"],
+            track["id"],
+            True,
+            track["enabled"],
         )
     ET.indent(root)
     ET.ElementTree(root).write(output / "timeline.xml", encoding="utf-8", xml_declaration=True)
 
 
-def package(folder, output, info, segments, overlaps, progress, hardware):
+def package(folder, output, info, segments, overlaps, progress, hardware, processing=None):
     import shutil
 
     for name in ["original.wav", "video.mp4"]:
         shutil.move(str(folder / name), output / name)
+    for name in ["music.wav", "radio.wav", "cleaned.wav"]:
+        if (folder / name).is_file():
+            shutil.move(str(folder / name), output / name)
     clips = output / "clips"
     clips.mkdir()
     records = []
@@ -230,18 +257,53 @@ def package(folder, output, info, segments, overlaps, progress, hardware):
                     writer.write(block)
                     remaining -= len(block)
         records.append({"fragment": i, **asdict(segment), "file": f"clips/{name}"})
+    speakers = sorted({s.speaker for s in segments})
+    extra_tracks = [
+        {
+            "id": "background",
+            "name": "Achtergrond en restgeluid",
+            "file": "background.wav",
+            "enabled": True,
+        }
+    ]
+    if (output / "music.wav").exists():
+        extra_tracks.append(
+            {"id": "music", "name": "Muziek en modelrest", "file": "music.wav", "enabled": True}
+        )
+    if (output / "radio.wav").exists():
+        extra_tracks.append(
+            {
+                "id": "radio",
+                "name": "Radio-referentie (standaard gedempt)",
+                "file": "radio.wav",
+                "enabled": False,
+            }
+        )
     manifest = {
-        "version": 1,
+        "version": 2,
         "time_origin_seconds": 0,
         "media": info,
         "segments": records,
         "overlaps": overlaps,
         "hardware": hardware,
+        "processing": processing or {},
+        "tracks": [
+            {
+                "id": f"speaker_{s:02}",
+                "name": f"Spreker {s}",
+                "file": f"speakers/speaker_{s:02}.wav",
+                "enabled": True,
+            }
+            for s in speakers
+        ]
+        + extra_tracks,
+        "reconstruction": "Alle sprekertracks + achtergrond + optionele muziek + optionele radio vormen samen original.wav (float-afronding). Radio is in XML standaard gedempt.",
         "warnings": [
             "Sprekers zijn geschatte anonieme clusters, geen vastgestelde personen.",
-            "Zonder geslaagde scheiding bevatten overlappen dezelfde mix op meerdere tracks.",
+            "Zonder geslaagde scheiding wordt de mix bij overlap over actieve tracks verdeeld; stemmen zijn daarmee nog niet geïsoleerd.",
             "Gescheiden overlap is mono, 8 kHz modelbandbreedte, teruggesampled naar de bronfrequentie.",
-            "Niet-gedetecteerde spraak blijft altijd aanwezig in original.wav.",
+            "Achtergrond/rest kan gemiste spraak of scheidingsartefacten bevatten; het is geen gegarandeerd zuivere muziektrack.",
+            "Muziekscheiding kan zang samen met vergaderstemmen in de stemmix houden. Geen automatische herkenning van een artiest.",
             "Variabele framerate: gebruik WAV-tracks op tijdstip 0 voor sample-nauwkeurige audio.",
         ],
     }
@@ -252,12 +314,14 @@ def package(folder, output, info, segments, overlaps, progress, hardware):
         w = csv.DictWriter(f, fieldnames=["fragment", "start", "end", "speaker", "file"])
         w.writeheader()
         w.writerows(records)
-    speakers = sorted({s.speaker for s in segments})
-    timeline_xml(output, info, speakers)
+    timeline_xml(output, info, speakers, extra_tracks)
     (output / "LEESMIJ.txt").write_text(
-        "Importeer video.mp4 en speakers/*.wav in aparte tracks, ALLEMAAL op tijdstip 0.\n"
+        "Importeer video.mp4, speakers/*.wav, background.wav en (indien aanwezig) music.wav in aparte tracks, ALLEMAAL op tijdstip 0.\n"
         "De volledige WAVs hebben evenveel samples; stilte houdt alle posities intact.\n"
         "original.wav is de originele gedecodeerde mix, NIET tegelijk afspelen met de sprekertracks.\n"
+        "radio.wav is de geschatte verwijderde radio en staat in XML standaard uit. Zet hem erbij aan om de originele mix te reconstrueren.\n"
+        "cleaned.wav is de mix na referentievermindering, alleen als referentie gebruiken, NIET dubbel afspelen.\n"
+        "background.wav bewaart niet-toegewezen geluid en restverschillen. Zonder muziekscheiding kan muziek onder spraak nog op sprekertracks staan.\n"
         "Premiere: probeer timeline.xml; wijs ontbrekende media aan in deze uitgepakte map.\n"
         "Clipchamp: importeer de volledige WAVs en plaats elk bestand aan het begin.\n"
         "clips/ bevat chronologische fragmenten; tussenliggende stilte ontbreekt daar!\n"
@@ -266,11 +330,16 @@ def package(folder, output, info, segments, overlaps, progress, hardware):
         "De XML-import is niet getest in Premiere/Clipchamp; de WAV-methode is de basis.\n",
         encoding="utf-8",
     )
+    make_zip(folder, output, progress)
+    return manifest
+
+
+def make_zip(folder, output, progress):
     files = [f for f in sorted(output.rglob("*")) if f.is_file()]
     total_bytes = sum(f.stat().st_size for f in files)
     written, last_update = 0, 0.0
     with zipfile.ZipFile(
-        folder / "result.zip", "w", compression=zipfile.ZIP_STORED, allowZip64=True
+        folder / "result.zip.tmp", "w", compression=zipfile.ZIP_STORED, allowZip64=True
     ) as z:
         for path in files:
             with (
@@ -287,4 +356,4 @@ def package(folder, output, info, segments, overlaps, progress, hardware):
                     if now - last_update >= 0.4 or written == total_bytes:
                         progress.update("ZIP maken", written / max(1, total_bytes))
                         last_update = now
-    return manifest
+    (folder / "result.zip.tmp").replace(folder / "result.zip")

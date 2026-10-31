@@ -30,9 +30,11 @@ def test_sample_exact_export_and_mixed_overlap(tmp_path):
     a, _ = sf.read(output / "speakers/speaker_01.wav", dtype="float32")
     b, _ = sf.read(output / "speakers/speaker_02.wav", dtype="float32")
     assert len(a) == len(b) == len(original)
-    np.testing.assert_array_equal(a[12000:96000], original[12000:96000])
+    np.testing.assert_array_equal(a[12000:72000], original[12000:72000])
+    np.testing.assert_array_equal(a[72000:96000], original[72000:96000] / 2)
     assert not np.any(a[:12000]) and not np.any(a[96000:168000])
-    np.testing.assert_array_equal(b[72000:144000], original[72000:144000])
+    np.testing.assert_array_equal(b[72000:96000], original[72000:96000] / 2)
+    np.testing.assert_array_equal(b[96000:144000], original[96000:144000])
     assert overlaps == [
         {
             "start": 1.5,
@@ -56,7 +58,7 @@ def test_sample_exact_export_and_mixed_overlap(tmp_path):
         assert len([n for n in z.namelist() if n.startswith("clips/")]) == 3
         assert z.testzip() is None
     first, _ = sf.read(output / manifest["segments"][0]["file"], dtype="float32")
-    np.testing.assert_array_equal(first, original[12000:96000])
+    np.testing.assert_array_equal(first, a[12000:96000])
 
 
 def test_ambiguous_sources_are_not_silently_assigned():

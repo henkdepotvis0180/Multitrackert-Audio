@@ -1,4 +1,4 @@
-"""Explicitly distinguish the unrun real separator from deterministic adapter tests."""
+"""Real local overlap model inference (Conv-TasNet, or legacy SepFormer if installed)."""
 
 import numpy as np
 import pytest
@@ -7,7 +7,7 @@ from multitrack.config import MODELS, ROOT
 from multitrack.separate import Separator, ready
 
 
-@pytest.mark.skipif(not ready(MODELS), reason="Optional SepFormer weights not installed")
+@pytest.mark.skipif(not ready(MODELS), reason="Optional overlap model not installed")
 def test_real_separator_local_inference(monkeypatch):
     import socket
 

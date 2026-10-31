@@ -1,0 +1,3 @@
+# First install the matching official CPU/CUDA builds, as described in README.
+torch==2.8.0
+torchaudio==2.8.0

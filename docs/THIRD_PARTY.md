@@ -29,3 +29,13 @@ De optionele modeldownload legt een exact Hugging Face commit-ID en lokale SHA-2
 bestandschecksums vast. De twee basismodeldownloads zijn vastgepind op checksums in
 `scripts/download_models.py`; een afwijking stopt installatie, zonder verificatie uit
 te schakelen of andere gewichten stilzwijgend te accepteren.
+
+## Toegevoegd in 0.2
+
+- **Hybrid Demucs / HDEMUCS_HIGH_MUSDB**: Demucs is MIT ([officiële licentie](https://github.com/facebookresearch/demucs/blob/main/LICENSE)); een kopie staat in `docs/licenses/demucs-MIT.txt`. De implementatie/fabriek komt uit BSD-gelicentieerd torchaudio 2.8.0. De officiële PyTorch-pipeline publiceert `hdemucs_high_musdbhq_only.pt` via `download.pytorch.org/torchaudio/models/`. Model en sample-rate volgen de [pipeline-definitie](https://github.com/pytorch/audio/blob/v2.8.0/src/torchaudio/pipelines/_source_separation_pipeline.py). Het model is getraind op MUSDB-HQ; de trainingsdata worden niet verspreid of voor installatie vereist.
+- **Conv-TasNet / CONVTASNET_BASE_LIBRI2MIX**: implementatie en officiële gewichten uit dezelfde torchaudio-pipeline, BSD-style. Model: `conv_tasnet_base_libri2mix.pt`, 8 kHz, twee bronnen. De trainingsdata worden niet verspreid. Dit is de nieuw aanbevolen stemmenscheider; SpeechBrain/SepFormer is een optionele oudere fallback.
+- Beide modelbestanden hebben vaste SHA-256-checksums in de app en downloader. HTTPS-, checksum- en packageverificatie blijven ingeschakeld. Verwerking doet geen modeldownloads; de lokale state dictionaries worden met `torch.load(..., weights_only=True)` geladen.
+- De referentie-radiofilter is eigen MIT-code met NumPy/SciPy. Geen modelgewichten, muziekdienst of artiestdatabase. Het referentiebestand levert de gebruiker zelf lokaal aan.
+
+De MIT/BSD-softwarelicenties geven geen nieuwe rechten op muziek of opnames die je
+zelf verwerkt of doorlevert. Dat staat los van de gratis commerciële inzet van deze app.
