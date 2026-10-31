@@ -1,5 +1,14 @@
 param([Parameter(Mandatory=$true)][string]$Installer)
 $ErrorActionPreference = 'Stop'
+trap {
+    $message = $_.Exception.Message.Replace('%','%25').Replace("`r",'%0D').Replace("`n",'%0A')
+    Write-Output "::error title=Windows installer verification::$message"
+    if (Test-Path $InstallLog) {
+        $tail = (Get-Content $InstallLog -Tail 35) -join "`n"
+        Write-Output ("::error title=Installer log tail::" + $tail.Replace('%','%25').Replace("`r",'%0D').Replace("`n",'%0A'))
+    }
+    exit 1
+}
 $Installer = (Resolve-Path $Installer).Path
 $InstallDir = Join-Path $env:LOCALAPPDATA 'Multitrackert-Installer-Test'
 $DataDir = Join-Path $env:RUNNER_TEMP 'multitrack-installer-retained-data'
@@ -9,9 +18,11 @@ $env:MULTITRACK_NO_BROWSER = '1'
 $InstallLog = Join-Path $env:RUNNER_TEMP 'multitrack-install.log'
 # Stable AppId and explicit binary cleanup are exercised by installing twice.
 foreach ($n in 1..2) {
+    Write-Output "::notice title=Installer progress::Installation pass $n started"
     $process = Start-Process -FilePath $Installer -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /DIR=`"$InstallDir`" /LOG=`"$InstallLog`"" -PassThru -Wait
     if ($process.ExitCode -notin @(0,3010)) { throw "Installer failed with exit $($process.ExitCode); $InstallLog" }
     if (-not (Test-Path "$InstallDir\MultitrackertAudio.exe")) { throw 'Installed executable missing' }
+    Write-Output "::notice title=Installer progress::Installation pass $n completed; testing installed app"
     python windows/smoke_test.py "$InstallDir\MultitrackertAudio.exe"
     if ($LASTEXITCODE -ne 0) { throw 'Installed app smoke test failed' }
     if ($n -eq 1) {
@@ -39,6 +50,7 @@ if (-not (Test-Path (Join-Path $DataDir 'retained-audio.wav'))) { throw 'Update 
 foreach ($saved in $savedProjects) {
     if ((Get-FileHash $saved.Path -Algorithm SHA256).Hash -ne $saved.Hash) { throw "Update modified a saved ZIP" }
 }
+Write-Output "::notice title=Installer progress::Upgrade and retained media verified; checking uninstall"
 $Uninstaller = Join-Path $InstallDir 'unins000.exe'
 $process = Start-Process -FilePath $Uninstaller -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -PassThru -Wait
 if ($process.ExitCode -ne 0) { throw "Uninstall failed with $($process.ExitCode)" }

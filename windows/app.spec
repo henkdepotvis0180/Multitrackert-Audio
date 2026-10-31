@@ -22,6 +22,8 @@ for package in ['torch', 'torchaudio', 'sherpa_onnx', 'soundfile']:
     datas += data
     binaries += binary
     hidden += imports
+# Eager inference needs the DLLs, not the C++ SDK headers or CMake development files.
+datas = [item for item in datas if not item[1].replace('\\', '/').startswith(('torch/include', 'torch/share/cmake'))]
 for distribution in ['multitrackert-audio', 'torch', 'torchaudio']:
     datas += copy_metadata(distribution)
 a = Analysis([str(repo / 'windows' / 'entry.py')], pathex=[str(repo)],

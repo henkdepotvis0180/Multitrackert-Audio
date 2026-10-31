@@ -10,3 +10,4 @@ models/*
 !models/.gitkeep
 .local-data/
 .env
+artifacts/

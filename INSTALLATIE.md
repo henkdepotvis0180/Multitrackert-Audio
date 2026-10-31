@@ -22,7 +22,7 @@ en kan de lokale uitvoermap openen na een onderbroken browserdownload.
 
 | Versie | Nodig voor de basis | Extra voor muziek/radio en stemmen | Wat opnieuw installeren? |
 | --- | --- | --- | --- |
-| **0.1.0** | Python 3.12 (64-bit), FFmpeg + ffprobe, `requirements.lock`, basismodellen (~45 MB) | Oude optionele SpeechBrain/SepFormer-route | Bij nieuwe installatie alles in de basiskolom. Upgrade voor de nieuwere muziekfuncties naar 0.2.1. |
+| **0.1.0** | Python 3.12 (64-bit), FFmpeg + ffprobe, `requirements.lock`, basismodellen (~45 MB) | Oude optionele SpeechBrain/SepFormer-route | Bij nieuwe installatie alles in de basiskolom. Upgrade voor de nieuwere functies naar 0.3.0. |
 | **0.2.0** | Dezelfde basis als 0.1.0; installeer de requirements uit de nieuwe broncode en werk het app-pakket bij | Voor muziek: PyTorch **2.8.0** + torchaudio **2.8.0**, HDemucs (~320 MB). Voor overlap: Conv-TasNet (~20 MB) | Vanaf 0.1: code bijwerken, requirements controleren, app bijwerken; alleen de gewenste extra's installeren. Bestaande basismodellen behouden. |
 | **0.2.1** | Dezelfde basis als 0.2.0 | **Dezelfde** runtime en modellen als 0.2.0 | Vanaf 0.2.0: alleen broncode/app bijwerken; geen nieuwe modeldownloads. Deze versie voegt het versie- en installatieoverzicht toe. |
 | **0.3.0 — Windows CPU-installer** | Alles inbegrepen in de `.exe` | Geen losse installatie nodig; CUDA blijft via de bronversie | Nieuwe `.exe` installeren: programmabestanden worden vervangen, projectdata blijft staan. |

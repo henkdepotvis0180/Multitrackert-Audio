@@ -99,13 +99,24 @@ jobs:
       - name: Build self-contained app
         run: python -m PyInstaller --noconfirm --clean windows/app.spec
       - name: Test the actual frozen application
-        run: python windows/smoke_test.py dist/MultitrackertAudio/MultitrackertAudio.exe
-      - name: Compile the installer
+        timeout-minutes: 6
         shell: pwsh
         run: |
+          Write-Output '::notice title=Packaging progress::Frozen app built; checking bundled models and subprocesses'
+          python windows/smoke_test.py dist/MultitrackertAudio/MultitrackertAudio.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Write-Output '::notice title=Packaging progress::Frozen application passed'
+
+      - name: Compile the installer
+        timeout-minutes: 10
+        shell: pwsh
+        run: |
+          Write-Output '::notice title=Packaging progress::Compressing the Windows installer'
           & 'C:/Program Files (x86)/Inno Setup 6/ISCC.exe' windows/setup.iss
           if ($LASTEXITCODE -ne 0) { throw 'Inno Setup failed' }
+          Write-Output '::notice title=Packaging progress::Installer compiled; starting install and upgrade checks'
       - name: Test installation, upgrade and data retention
+        timeout-minutes: 10
         shell: pwsh
         run: windows/verify_install.ps1 -Installer "artifacts/Multitrackert-Audio-Setup-$env:MULTITRACK_BUILD_VERSION-CPU-x64.exe"
       - name: Release files and checksums

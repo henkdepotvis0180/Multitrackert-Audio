@@ -98,3 +98,32 @@ ontbrekende onderdelen, Windows-/Linux-/macOS-commando's, CPU-/CUDA-keuze en mob
 formaat. Ontbrekende modellen openen het overzicht; aanwezige modellen worden niet
 opnieuw als vereiste download aangeboden. Geen JavaScript-fouten. Dit valideert de
 weergave van de commando's, niet installatie op Windows/macOS of een GPU-machine.
+
+## Aanvulling 0.3: zelfstandige app en blijvende lokale uitvoer
+
+- **36 tests geslaagd** met de eigen minimale FFmpeg 7.1.5-build, inclusief echte
+  modellen, MP4-verwerking en de drie nieuwe opslag-/hersteltests.
+- Een nieuwe browsersessie vindt dezelfde volledige ZIP en bron-MP4 terug. Een
+  ZIP-download is in twee HTTP Range-aanvragen gereconstrueerd. Projectnamen zijn
+  metadata en kunnen geen andere bestandslocaties veroorzaken.
+- Een bestaande standaarddatamap uit de bronversie wordt hergebruikt; de standaardmap
+  van de Windows-installer staat buiten de programmamap. De code weigert expliciet
+  een datamap binnen de standalone-installatiemap.
+- De zelfstandige verpakking is lokaal daadwerkelijk gebouwd en uitgevoerd: modellen,
+  verwerkingssubprocessen, mix, ZIP-integriteit, downloadhervatting, opgeslagen uitvoer,
+  installerweergave in de browser en afsluiten via de website. Deze lokale frozen
+  controle is Linux, niet Windows.
+- De eerste native Windows-build publiceerde geen installer omdat de pakketcontrole
+  een ontbrekende SciPy-module vond. Het pakket verzamelt nu ook de dynamische
+  `scipy._external`-modules; de fout is lokaal gereproduceerd en opgelost.
+- De Windows-workflow controleert daarnaast de werkelijke Windows-executable en
+  installer: installeren, een lopende app bijwerken, oude programmabestanden opruimen,
+  mediachecksums behouden en de-installeren zonder projectdata te verwijderen. Alleen
+  een volledig geslaagde workflow publiceert een release-preview. Controleer de
+  [actuele Windows-build](https://github.com/henkdepotvis0180/Multitrackert-Audio/actions/workflows/windows-installer.yml)
+  voor het resultaat van die native checks.
+
+De installer is CPU-only en niet digitaal ondertekend. De controle gebruikt een
+GitHub-hosted Windows-machine, geen schone eigen Windows-pc zonder reeds aanwezige
+Microsoft-runtime. CUDA blijft via de broninstallatie beschikbaar en is niet op een
+GPU getest. De kwaliteitsgrenzen van muziek-/radio-/stemmenscheiding blijven gelden.
