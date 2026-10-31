@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -10,7 +11,13 @@ class MediaError(ValueError):
 
 
 def run(args, timeout=600):
-    result = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+    result = subprocess.run(
+        args,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+    )
     if result.returncode:
         raise MediaError(result.stderr[-2000:] or "FFmpeg-opdracht mislukt.")
     return result.stdout

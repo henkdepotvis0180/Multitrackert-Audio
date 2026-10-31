@@ -25,6 +25,7 @@ from .music import ready as music_ready
 from .remix import configure_mix
 from .separate import ready
 from .state import atomic_json, read_json
+from .storage import open_folder, project_info, save_project, storage_info
 
 TERMINAL = {"done", "error", "cancelled", "interrupted"}
 
@@ -70,7 +71,13 @@ class Jobs:
         log = (folder / "worker.log").open("a")
         try:
             self.process = subprocess.Popen(
-                [sys.executable, "-m", module, str(folder)], stdout=log, stderr=log
+                (
+                    [sys.executable, "--worker", module, str(folder)]
+                    if getattr(sys, "frozen", False)
+                    else [sys.executable, "-m", module, str(folder)]
+                ),
+                stdout=log,
+                stderr=log,
             )
         finally:
             log.close()
@@ -162,6 +169,7 @@ def create_app(data=None):
         return {
             **hardware,
             "installation": installation_status(hardware["ffmpeg"], hardware["cuda_available"]),
+            "desktop": getattr(sys, "frozen", False),
             "models_ready": model_ready(config.MODELS),
             "separation_ready": ready(config.MODELS),
             "music_ready": music_ready(config.MODELS),
@@ -169,10 +177,43 @@ def create_app(data=None):
             "max_minutes": config.MAX_SECONDS // 60,
         }
 
+    @app.get("/api/health")
+    async def health():
+        from . import __version__
+
+        return {
+            "app": "Multitrackert Audio",
+            "version": __version__,
+            "desktop": getattr(sys, "frozen", False),
+        }
+
+    @app.get("/api/storage")
+    async def storage(request: Request):
+        return {
+            "data_dir": str(request.app.state.jobs.root.parent.resolve()),
+            "projects_dir": str(request.app.state.jobs.root.resolve()),
+        }
+
+    @app.post("/api/storage/open")
+    async def open_storage(request: Request):
+        try:
+            open_folder(request.app.state.jobs.root)
+        except (OSError, ValueError) as e:
+            raise HTTPException(409, str(e)) from e
+        return {"opened": True}
+
+    @app.post("/api/app/quit")
+    async def quit_app(request: Request):
+        callback = getattr(request.app.state, "shutdown_callback", None)
+        if callback is None:
+            raise HTTPException(409, "Stop de bronversie met Ctrl+C in de terminal.")
+        callback()
+        return {"message": "De lokale app wordt afgesloten. Bewaarde projecten blijven staan."}
+
     @app.get("/api/jobs")
     async def list_jobs(request: Request):
         return [
-            {"id": p.name, **read_json(p / "status.json")}
+            {"id": p.name, **read_json(p / "status.json"), "project": project_info(p)}
             for p in sorted(request.app.state.jobs.root.iterdir(), reverse=True)
             if (p / "status.json").is_file()
         ]
@@ -220,6 +261,7 @@ def create_app(data=None):
                     f.write(chunk)
             if size == 0:
                 raise HTTPException(422, "Bestand is leeg.")
+            save_project(folder, request.headers.get("x-filename"))
             atomic_json(
                 folder / "options.json",
                 {
@@ -289,7 +331,8 @@ def create_app(data=None):
 
     @app.get("/api/jobs/{ident}")
     async def status(request: Request, ident: str):
-        return read_json(job(request, ident) / "status.json")
+        folder = job(request, ident)
+        return {**read_json(folder / "status.json"), "project": project_info(folder)}
 
     @app.post("/api/jobs/{ident}/mix", status_code=202)
     async def mix(request: Request, ident: str, options: MixOptions):
@@ -325,6 +368,20 @@ def create_app(data=None):
             manager.release()
             raise
         return {"id": ident}
+
+    @app.get("/api/jobs/{ident}/storage")
+    async def job_storage(request: Request, ident: str):
+        return storage_info(job(request, ident))
+
+    @app.post("/api/jobs/{ident}/open-folder")
+    async def open_job_folder(request: Request, ident: str):
+        folder = job(request, ident)
+        target = folder / "export" if (folder / "export").is_dir() else folder
+        try:
+            open_folder(target)
+        except (OSError, ValueError) as e:
+            raise HTTPException(409, str(e)) from e
+        return {"opened": True, "path": str(target.resolve())}
 
     @app.post("/api/jobs/{ident}/cancel")
     async def cancel(request: Request, ident: str):

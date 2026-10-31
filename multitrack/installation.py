@@ -78,7 +78,12 @@ def installation_status(ffmpeg_ready, cuda_available=False):
     ]
     return {
         "version": __version__,
+        "packaged": bool(getattr(sys, "frozen", False)),
         "cuda_available": cuda_available,
-        "update_note": "Versie 0.2.1 heeft dezelfde dependencies en modellen als 0.2.0; voor deze update is geen extra modeldownload nodig.",
+        "update_note": (
+            "Windows CPU-editie: Python, FFmpeg en de modellen zijn inbegrepen. Je hoeft geen losse dependencies te installeren."
+            if getattr(sys, "frozen", False)
+            else "Versie 0.3 gebruikt voor de broninstallatie dezelfde dependencies en modellen als 0.2. Updates en uitvoerbestanden staan los van elkaar."
+        ),
         "checks": checks,
     }

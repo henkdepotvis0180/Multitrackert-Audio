@@ -4,6 +4,55 @@ Lokale MP4-verwerking met een tijdlijn per spreker, behoud van achtergrondgeluid
 optionele muziekscheiding en een instelbare Premiere-export. **Opnames blijven op je
 computer.** Alleen de eenmalige installatie/modeldownload heeft internet nodig.
 
+## Nieuw in 0.3: Windows-installer en lokale opslag
+
+**[Windows-installers en bouwstatus op GitHub](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases)**
+
+De Windows CPU-installer bevat Python, FFmpeg en de modellen. Eenmalig de `.exe`
+installeren; daarna opent de lokale website en zijn geen losse pip-/modelinstallaties
+nodig. Alleen succesvolle, op Windows gecontroleerde builds worden als release geplaatst.
+Staat er nog geen `.exe` bij Releases, dan is die build nog niet succesvol afgerond.
+Deze preview is niet digitaal ondertekend; Windows kan een onbekende uitgever tonen.
+
+Updates vervangen de oude programmabestanden, niet je opnames. Standaard bewaart de
+installer projecten buiten de installatiemap in `%LOCALAPPDATA%\Multitrackert Audio\Data`.
+Een bestaande `%USERPROFILE%\.multitrackert` wordt automatisch hergebruikt. Onbekende
+oude broncode-/Python-mappen worden niet verwijderd, omdat daar gebruikersbestanden in
+kunnen staan. Sluit de oude `.bat`-server vóór je de desktop-app opent.
+
+De website toont **Open lokale opslagmap**, **Open lokale uitvoermap** en per opdracht
+**Map**. De bron-MP4, video, WAVs en ZIP staan daar ook als een browserdownload afbreekt.
+Je kunt de ZIP later opnieuw downloaden; HTTP Range ondersteunt gedeeltelijk hervatten.
+De browser moet hervatten zelf ondersteunen; anders download je opnieuw of kopieer je
+het reeds complete ZIP-bestand uit de lokale uitvoer-/projectmap.
+
+```text
+Projectenmap/
+  jobs/
+    <opdracht-id>/
+      project.json          # oorspronkelijke bestandsnaam en aanmaakmoment
+      input.mp4             # jouw bronopname
+      result.zip            # complete download, onafhankelijk van de browser
+      export/
+        video.mp4
+        original.wav
+        background.wav
+        music.wav           # als muziekscheiding aan stond
+        speakers/*.wav
+        cleaned.wav         # na het kiezen van een mix
+        removed.wav
+        timeline.xml
+        timeline.json
+        clips/*.wav
+```
+
+De uninstaller verwijdert de programmabestanden, **niet** deze projecten. Alleen de
+knop “Verwijder” bij een opdracht verwijdert de bijbehorende opname en exports.
+Installeer een update nadat de lopende verwerking klaar is: bijwerken sluit de app af.
+Complete exports blijven behouden; een onderbroken verwerking kun je opnieuw uitvoeren.
+De desktop-app stop je via **App afsluiten** op de website. Deze installer is CPU-only;
+voor NVIDIA/CUDA blijft onderstaande broninstallatie beschikbaar.
+
 ## Nieuw in 0.2.1: installatie per versie
 
 **[Wat moet ik per versie installeren? → INSTALLATIE.md](INSTALLATIE.md)**

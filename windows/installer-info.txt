@@ -1,0 +1,11 @@
+Multitrackert Audio - Windows CPU-editie
+
+Deze installer bevat de app, Python, FFmpeg en de modellen voor spreker-, muziek- en stemmenscheiding. Na installatie is verwerking offline mogelijk.
+
+Een update vervangt de oude programmabestanden. Projecten en opnames staan buiten de installatiemap en blijven ook bij verwijderen van de app bewaard. Op de website vind je de knop Open lokale opslagmap.
+
+Wacht tot eventuele lopende verwerking klaar is voordat je bijwerkt: de installer sluit de bestaande app af. Complete exports en bronbestanden blijven bewaard. Een onderbroken verwerking kun je opnieuw starten met de bronopname.
+
+Deze editie gebruikt CPU. Voor NVIDIA/CUDA is de bestaande broninstallatie beschikbaar; zie de README op GitHub.
+
+De installer is niet digitaal ondertekend. Windows kan daarom een onbekende uitgever tonen.

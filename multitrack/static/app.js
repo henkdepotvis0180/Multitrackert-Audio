@@ -33,6 +33,7 @@ function renderInstallation() {
   $("app-version").textContent =
     `Je draait versie ${installation.version}. ${installation.update_note}`;
   $("footer-version").textContent = `versie ${installation.version}`;
+  $("install-os").parentElement.parentElement.hidden = installation.packaged;
   $("installation-checks").replaceChildren();
   for (const check of installation.checks) {
     const needsCuda =
@@ -59,6 +60,7 @@ function renderInstallation() {
         ? " NVIDIA/CUDA is nog niet beschikbaar. Controleer ook de GPU en driver; CPU blijft mogelijk."
         : "");
     let command = check[platform] || check.posix;
+    if (installation.packaged) command = 'Installeer de volledige Windows-installer opnieuw als dit onderdeel ontbreekt. Je projectbestanden blijven buiten de installatiemap bewaard.';
     if (gpu.value === "cuda" && command.includes("/whl/cpu")) {
       command = command
         .replace("/whl/cpu", "/whl/cu128")
@@ -87,6 +89,7 @@ $("install-device").onchange = renderInstallation;
 async function system() {
   try {
     const s = await api("/api/system");
+    $("quit-app").hidden = !s.desktop;
     installation = s.installation;
     renderInstallation();
     if (
@@ -147,6 +150,7 @@ $("upload-form").addEventListener("submit", (event) => {
   );
   xhr.setRequestHeader("X-Multitrack", "local");
   xhr.setRequestHeader("Content-Type", "video/mp4");
+  xhr.setRequestHeader("X-Filename", encodeURIComponent(file.name));
   xhr.upload.onprogress = (e) => {
     if (e.lengthComputable) {
       $("progress").value = e.loaded / e.total;
@@ -244,6 +248,8 @@ async function showResult(id, s) {
   const data = await api(`/api/jobs/${id}/timeline`);
   $("result").hidden = false;
   $("download").href = `/api/jobs/${id}/download`;
+  const storage = await api(`/api/jobs/${id}/storage`);
+  $("output-path").textContent = `Lokale uitvoer: ${storage.output_dir} · ZIP: ${storage.zip}`;
   $("summary").textContent =
     `${s.speakers.length} sprekers · ${data.segments.length} fragmenten · ${seconds(data.media.duration)} totaal. ${s.unseparated_overlap_count} overlapregio’s bevatten nog de oorspronkelijke mix.`;
   $("summary").className = s.unseparated_overlap_count ? "warning" : "";
@@ -413,7 +419,7 @@ async function history() {
     const row = document.createElement("div");
     row.className = "history-row";
     const label = document.createElement("span");
-    label.textContent = `${j.id.slice(0, 8)} · ${j.phase || j.state}`;
+    label.textContent = `${j.project?.name || j.id.slice(0, 8)} · ${j.project?.created_at ? new Date(j.project.created_at*1000).toLocaleString('nl-NL') + ' · ' : ''}${j.phase || j.state}`;
     const open = document.createElement("button");
     open.textContent = "Open";
     open.className = "secondary";
@@ -450,8 +456,19 @@ async function history() {
       }
     };
     row.append(label, open, del);
+    const folder = document.createElement('button'); folder.className = 'secondary'; folder.textContent = 'Map';
+    folder.onclick = async () => { try { await api(`/api/jobs/${j.id}/open-folder`, {method:'POST'}); } catch(e) { error(e); } };
+    row.append(folder);
     $("history").append(row);
   }
 }
 system();
 history().catch(error);
+api('/api/storage').then(s => { $("storage-path").textContent = `Projecten worden bewaard in: ${s.projects_dir}`; }).catch(error);
+$("open-storage").onclick = async () => { try { await api('/api/storage/open', {method:'POST'}); } catch(e) { error(e); } };
+$("open-output").onclick = async () => { try { await api(`/api/jobs/${current}/open-folder`, {method:'POST'}); } catch(e) { error(e); } };
+$("quit-app").onclick = async () => {
+  if (!confirm(busy ? 'De app afsluiten? De lopende verwerking stopt. Bewaarde projecten blijven staan.' : 'De lokale app afsluiten? Je projecten blijven bewaard.')) return;
+  try { await api('/api/app/quit', {method:'POST'}); clearTimeout(timer); $("system").textContent = 'App afgesloten. Je projecten blijven lokaal bewaard. Start Multitrackert Audio opnieuw via het Startmenu.'; }
+  catch(e) { error(e); }
+};

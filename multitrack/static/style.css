@@ -267,3 +267,5 @@ pre {
 #installation-panel a {
   color: #82e3b8;
 }
+.storage-path { overflow-wrap: anywhere; }
+.history-row span { min-width: 0; overflow-wrap: anywhere; }

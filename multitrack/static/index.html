@@ -64,6 +64,13 @@
             >
           </p>
         </details>
+        <div class="row">
+          <button id="open-storage" class="secondary">Open lokale opslagmap</button>
+          <button id="quit-app" class="secondary" hidden>App afsluiten</button>
+        </div>
+        <p id="storage-path" class="hint storage-path"></p>
+        <p class="hint">Opnames, losse audio, video en ZIP blijven lokaal bewaard, ook als een
+          browserdownload wordt onderbroken. Alleen “Verwijder” bij een opdracht verwijdert dat project.</p>
       </section>
       <section>
         <h2>1. Kies je opname</h2>
@@ -177,6 +184,8 @@
           <a id="download" class="button">Download ZIP</a>
         </div>
         <p id="summary"></p>
+        <button id="open-output" class="secondary">Open lokale uitvoermap</button>
+        <p id="output-path" class="hint storage-path"></p>
         <p id="processing-note" class="hint"></p>
         <p class="hint">
           Klik op de tijdlijn om het origineel op die positie af te spelen.

@@ -1,9 +1,22 @@
 # Wat moet ik per versie installeren?
 
-**Huidige versie: 0.2.1.** Kijk op de website bij **Versie & installatie** om te zien
+**Huidige bronversie: 0.3.0.** Kijk op de website bij **Versie & installatie** om te zien
 welke versie je daadwerkelijk draait, wat aanwezig is en wat nog ontbreekt.
 Kies daar Windows, Linux of macOS en CPU of NVIDIA voor passende commando's.
 De website installeert niets automatisch.
+
+## Windows: alleen een installer downloaden
+
+Open [GitHub Releases](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases)
+en download de `.exe` van de nieuwste succesvol gebouwde Windows CPU-preview. De
+installer bevat Python, FFmpeg, de bibliotheken en alle drie modellen. Je hoeft de
+losse commando’s hieronder dan niet uit te voeren. Verschijnt er nog geen `.exe`,
+dan is de Windows-build nog niet geslaagd. De installer is niet digitaal ondertekend.
+
+Nieuwe installers vervangen de oude geïnstalleerde app. Je opnames en exports staan
+buiten de installatiemap en blijven behouden, ook bij de-installatie. Een bestaande
+standaardmap uit de Python-versie wordt hergebruikt. De website toont het opslagpad
+en kan de lokale uitvoermap openen na een onderbroken browserdownload.
 
 ## Overzicht
 
@@ -12,6 +25,8 @@ De website installeert niets automatisch.
 | **0.1.0** | Python 3.12 (64-bit), FFmpeg + ffprobe, `requirements.lock`, basismodellen (~45 MB) | Oude optionele SpeechBrain/SepFormer-route | Bij nieuwe installatie alles in de basiskolom. Upgrade voor de nieuwere muziekfuncties naar 0.2.1. |
 | **0.2.0** | Dezelfde basis als 0.1.0; installeer de requirements uit de nieuwe broncode en werk het app-pakket bij | Voor muziek: PyTorch **2.8.0** + torchaudio **2.8.0**, HDemucs (~320 MB). Voor overlap: Conv-TasNet (~20 MB) | Vanaf 0.1: code bijwerken, requirements controleren, app bijwerken; alleen de gewenste extra's installeren. Bestaande basismodellen behouden. |
 | **0.2.1** | Dezelfde basis als 0.2.0 | **Dezelfde** runtime en modellen als 0.2.0 | Vanaf 0.2.0: alleen broncode/app bijwerken; geen nieuwe modeldownloads. Deze versie voegt het versie- en installatieoverzicht toe. |
+| **0.3.0 — Windows CPU-installer** | Alles inbegrepen in de `.exe` | Geen losse installatie nodig; CUDA blijft via de bronversie | Nieuwe `.exe` installeren: programmabestanden worden vervangen, projectdata blijft staan. |
+| **0.3.0 — bronversie** | Dezelfde basis als 0.2.1 | Dezelfde extra modellen als 0.2 | Alleen code/app bijwerken; geen nieuwe modellen. |
 
 **Muziek en radio zijn optioneel.** Zonder de extra's kun je de lokale website,
 spreker-tijdlijn en achtergrond/rest-export gebruiken. Voor de radio-/muziekkeuzes
@@ -23,7 +38,7 @@ Conv-TasNet-route heeft geen SpeechBrain, Hugging Face-account of token nodig.
 Heb je nog torch/torchaudio 2.5.1 uit een oude installatie? Werk **beide** bij naar
 2.8.0 met de commando's hieronder als je de nieuwe audiofuncties wilt gebruiken.
 
-## Ik heb 0.2.0 en wil naar 0.2.1
+## Ik werk een bestaande broninstallatie bij
 
 Stop de server met `Ctrl+C`. Haal de nieuwste code op met `git pull` als je de
 repository hebt gecloned. Anders download je de nieuwste repository-ZIP van GitHub;
@@ -48,7 +63,7 @@ Voer daarna in de projectmap uit:
 
 Bestaande passende dependencies blijven aanwezig. **Voer de modeldownloaders niet
 opnieuw uit als je die modellen al hebt.** Controleer na herstart bovenaan de website
-of er **0.2.1** staat. Vernieuw de browserpagina; bij oude opmaak eventueel `Ctrl+F5`.
+of er **0.3.0** staat. Vernieuw de browserpagina; bij oude opmaak eventueel `Ctrl+F5`.
 
 ## Ik heb 0.1.0 en wil de muziek-/radiofuncties
 
