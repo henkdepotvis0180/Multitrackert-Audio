@@ -1,11 +1,11 @@
 import json
-import os
 import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
+import multitrack.state as state_module
 from multitrack.state import atomic_json, open_shared_text, read_json
 
 
@@ -27,7 +27,7 @@ def test_concurrent_status_writers_never_share_temporary_files(tmp_path):
 def test_windows_sharing_violation_is_retried_and_old_data_preserved(tmp_path, monkeypatch):
     path = tmp_path / "status.json"
     atomic_json(path, {"old": True})
-    replace = os.replace
+    replace = state_module.replace_file
     count = 0
 
     def locked(a, b):
@@ -40,7 +40,7 @@ def test_windows_sharing_violation_is_retried_and_old_data_preserved(tmp_path, m
             raise e
         return replace(a, b)
 
-    monkeypatch.setattr(os, "replace", locked)
+    monkeypatch.setattr(state_module, "replace_file", locked)
     atomic_json(path, {"new": True})
     assert count == 4 and read_json(path) == {"new": True}
     assert not list(tmp_path.glob("*.tmp"))
@@ -53,7 +53,7 @@ def test_permanent_denial_keeps_previous_status_and_reports_error(tmp_path, monk
     def denied(*args):
         raise PermissionError("permanent denial")
 
-    monkeypatch.setattr(os, "replace", denied)
+    monkeypatch.setattr(state_module, "replace_file", denied)
     with pytest.raises(PermissionError):
         atomic_json(path, {"new": True})
     assert read_json(path) == {"old": True}

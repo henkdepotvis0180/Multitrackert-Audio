@@ -6,6 +6,26 @@ import time
 from pathlib import Path
 
 
+def replace_file(source, destination):
+    if sys.platform != "win32" or not destination.exists():
+        return os.replace(source, destination)
+    import ctypes
+    from ctypes import wintypes
+
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.ReplaceFileW.argtypes = [
+        wintypes.LPCWSTR,
+        wintypes.LPCWSTR,
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+    ]
+    kernel.ReplaceFileW.restype = wintypes.BOOL
+    if not kernel.ReplaceFileW(str(destination), str(source), None, 0, None, None):
+        raise ctypes.WinError(ctypes.get_last_error())
+
+
 def atomic_json(path: Path, value: dict):
     # Every writer owns its temp file. Readers may poll while another process writes.
     tmp = None
@@ -22,7 +42,7 @@ def atomic_json(path: Path, value: dict):
             json.dump(value, f, ensure_ascii=False, indent=2)
         for attempt in range(12):
             try:
-                os.replace(tmp, path)
+                replace_file(tmp, path)
                 return
             except OSError as e:
                 # Windows scanners and legacy readers can briefly deny replacement.
