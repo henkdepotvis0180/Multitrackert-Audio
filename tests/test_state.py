@@ -24,7 +24,10 @@ def test_concurrent_status_writers_never_share_temporary_files(tmp_path):
     assert not list(tmp_path.glob("*.tmp"))
 
 
-def test_windows_sharing_violation_is_retried_and_old_data_preserved(tmp_path, monkeypatch):
+@pytest.mark.parametrize("winerror", [5, 32, 33, 1176])
+def test_windows_sharing_violation_is_retried_and_old_data_preserved(
+    tmp_path, monkeypatch, winerror
+):
     path = tmp_path / "status.json"
     atomic_json(path, {"old": True})
     replace = state_module.replace_file
@@ -36,7 +39,7 @@ def test_windows_sharing_violation_is_retried_and_old_data_preserved(tmp_path, m
         if count <= 3:
             assert read_json(path) == {"old": True}
             e = PermissionError("simulated Windows sharing violation")
-            e.winerror = 5
+            e.winerror = winerror
             raise e
         return replace(a, b)
 

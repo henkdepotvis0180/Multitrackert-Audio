@@ -46,7 +46,7 @@ def atomic_json(path: Path, value: dict):
                 return
             except OSError as e:
                 # Windows scanners and legacy readers can briefly deny replacement.
-                if getattr(e, "winerror", None) not in {5, 32, 33} or attempt == 11:
+                if getattr(e, "winerror", None) not in {5, 32, 33, 1176} or attempt == 11:
                     raise
                 time.sleep(min(0.25, 0.02 * 2**attempt))
     finally:
