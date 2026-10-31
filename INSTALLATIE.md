@@ -1,13 +1,13 @@
 # Wat moet ik per versie installeren?
 
-**Huidige bronversie: 0.3.0.** Kijk op de website bij **Versie & installatie** om te zien
+**Huidige bronversie: 0.3.1.** Kijk op de website bij **Versie & installatie** om te zien
 welke versie je daadwerkelijk draait, wat aanwezig is en wat nog ontbreekt.
 Kies daar Windows, Linux of macOS en CPU of NVIDIA voor passende commando's.
 De website installeert niets automatisch.
 
 ## Windows: alleen een installer downloaden
 
-Download de **[Windows CPU-installer 0.3.0](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/download/v0.3.0/Multitrackert-Audio-Setup-0.3.0-CPU-x64.exe)** (circa 615 MB).
+Download de **[Windows CPU-installer 0.3.1](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/download/v0.3.1/Multitrackert-Audio-Setup-0.3.1-CPU-x64.exe)** (circa 851 MB).
 Andere versies vind je bij [GitHub Releases](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases). De
 installer bevat Python, FFmpeg, de bibliotheken en alle drie modellen. Je hoeft de
 losse commando’s hieronder dan niet uit te voeren. Verschijnt er nog geen `.exe`,
@@ -22,11 +22,12 @@ en kan de lokale uitvoermap openen na een onderbroken browserdownload.
 
 | Versie | Nodig voor de basis | Extra voor muziek/radio en stemmen | Wat opnieuw installeren? |
 | --- | --- | --- | --- |
-| **0.1.0** | Python 3.12 (64-bit), FFmpeg + ffprobe, `requirements.lock`, basismodellen (~45 MB) | Oude optionele SpeechBrain/SepFormer-route | Bij nieuwe installatie alles in de basiskolom. Upgrade voor de nieuwere functies naar 0.3.0. |
+| **0.1.0** | Python 3.12 (64-bit), FFmpeg + ffprobe, `requirements.lock`, basismodellen (~45 MB) | Oude optionele SpeechBrain/SepFormer-route | Bij nieuwe installatie alles in de basiskolom. Upgrade voor de nieuwere functies naar 0.3.1. |
 | **0.2.0** | Dezelfde basis als 0.1.0; installeer de requirements uit de nieuwe broncode en werk het app-pakket bij | Voor muziek: PyTorch **2.8.0** + torchaudio **2.8.0**, HDemucs (~320 MB). Voor overlap: Conv-TasNet (~20 MB) | Vanaf 0.1: code bijwerken, requirements controleren, app bijwerken; alleen de gewenste extra's installeren. Bestaande basismodellen behouden. |
 | **0.2.1** | Dezelfde basis als 0.2.0 | **Dezelfde** runtime en modellen als 0.2.0 | Vanaf 0.2.0: alleen broncode/app bijwerken; geen nieuwe modeldownloads. Deze versie voegt het versie- en installatieoverzicht toe. |
 | **0.3.0 — Windows CPU-installer** | Alles inbegrepen in de `.exe` | Geen losse installatie nodig; CUDA blijft via de bronversie | Nieuwe `.exe` installeren: programmabestanden worden vervangen, projectdata blijft staan. |
 | **0.3.0 — bronversie** | Dezelfde basis als 0.2.1 | Dezelfde extra modellen als 0.2 | Alleen code/app bijwerken; geen nieuwe modellen. |
+| **0.3.1 — Windows-correctie** | Installer bevat alles; bronversie gebruikt dezelfde dependencies als 0.3.0 | Dezelfde modellen als 0.3.0 | Installer over de huidige versie installeren, of de broncode/app bijwerken. Geen nieuwe modeldownloads; bestaande projectdata behouden. |
 
 **Muziek en radio zijn optioneel.** Zonder de extra's kun je de lokale website,
 spreker-tijdlijn en achtergrond/rest-export gebruiken. Voor de radio-/muziekkeuzes
@@ -63,7 +64,7 @@ Voer daarna in de projectmap uit:
 
 Bestaande passende dependencies blijven aanwezig. **Voer de modeldownloaders niet
 opnieuw uit als je die modellen al hebt.** Controleer na herstart bovenaan de website
-of er **0.3.0** staat. Vernieuw de browserpagina; bij oude opmaak eventueel `Ctrl+F5`.
+of er **0.3.1** staat. Vernieuw de browserpagina; bij oude opmaak eventueel `Ctrl+F5`.
 
 ## Ik heb 0.1.0 en wil de muziek-/radiofuncties
 
@@ -124,12 +125,14 @@ virtuele omgeving bestaan.
 
 Stop de server vóór installatie en start hem erna opnieuw, zodat de nieuwe
 bibliotheken worden ingeladen. Internet is alleen voor installatie/download nodig;
-je MP4 wordt niet naar een modelhost verstuurd. Windows/macOS-commando's zijn
-beschreven, maar alleen Linux-installatie en browserflow zijn hier gevalideerd.
+je MP4 wordt niet naar een modelhost verstuurd. De losse broninstallatiecommando's
+voor Windows/macOS zijn beschreven; de broninstallatie en browserflow zijn lokaal
+op Linux gevalideerd. De Windows-installer is daarnaast op native Windows getest;
+zie [validatie](docs/VALIDATION.md).
 
 ## 0.3.1 — Windows-correctie
 
-Gebruik de 0.3.1-installer zodra die bij Releases staat om de fout rond het vervangen
+Gebruik de 0.3.1-installer via de downloadlink hierboven om de fout rond het vervangen
 van `status.json` te verhelpen. Sluit eerst de oude app. Installeer over de huidige
 installer-versie heen: dezelfde app wordt bijgewerkt, bestaande projectdata blijft
 bewaard. Geen nieuwe modelversies of losse Python-installaties nodig. Bij een blijvende

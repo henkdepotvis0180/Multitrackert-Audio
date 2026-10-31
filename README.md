@@ -6,9 +6,9 @@ computer.** Alleen de eenmalige installatie/modeldownload heeft internet nodig.
 
 ## Nieuw in 0.3: Windows-installer en lokale opslag
 
-**[Download Windows CPU-installer 0.3.0 (.exe, circa 615 MB)](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/download/v0.3.0/Multitrackert-Audio-Setup-0.3.0-CPU-x64.exe)**
+**[Download Windows CPU-installer 0.3.1 (.exe, circa 851 MB)](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/download/v0.3.1/Multitrackert-Audio-Setup-0.3.1-CPU-x64.exe)**
 
-[Release, checksum en FFmpeg-broncode](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/tag/v0.3.0). De Windows-installatie-, update- en gegevensbehoudcontroles zijn geslaagd; de gepubliceerde download is op SHA-256 gecontroleerd.
+[Release, checksum en FFmpeg-broncode](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/tag/v0.3.1). De Windows-installatie-, update- en gegevensbehoudcontroles zijn geslaagd; de gepubliceerde download is op SHA-256 gecontroleerd.
 
 De Windows CPU-installer bevat Python, FFmpeg en de modellen. Eenmalig de `.exe`
 installeren; daarna opent de lokale website en zijn geen losse pip-/modelinstallaties
@@ -312,9 +312,10 @@ LGPL/GPL-verplichtingen hangen af van die build. Zie [bronnen en licenties](docs
 
 Deze update verhelpt een reproduceerbare Windows-bestandsvergrendeling bij
 `status.tmp → status.json`: statuslezers staan nu atomisch vervangen toe, schrijvers
-hebben unieke tijdelijke bestanden en tijdelijke Windows-vergrendelingen krijgen
-begrensde herhaalpogingen. Echte blijvende toegangsproblemen blijven een fout geven;
-er worden geen rechten omzeild en geen bestaande audiobestanden verwijderd.
+hebben unieke tijdelijke bestanden en wachten op elkaar, ook tussen processen.
+Tijdelijke Windows-vergrendelingen krijgen begrensde herhaalpogingen. Echte blijvende
+toegangsproblemen blijven een fout geven; er worden geen rechten omzeild en geen
+bestaande audiobestanden verwijderd.
 
 De website heeft **Download foutlog**. Dit ZIP bevat technische logregels, versies
 en lokale paden, geen audio/video en geen procesomgeving. Het wordt niet automatisch

@@ -141,3 +141,26 @@ Een latere optimalisatie laat onnodige C++-ontwikkelheaders weg en gebruikt snel
 verliesloze installercompressie. De compacte verpakking is ook lokaal als echte
 standalone-app met modellen en verwerkingssubprocessen getest. Bestaande gepubliceerde
 releasebestanden worden nooit stilzwijgend overschreven.
+
+## Aanvulling 0.3.1: Windows-statusbestanden en foutlogs
+
+- Lokaal: **45 tests geslaagd, 2 Windows-specifieke tests overgeslagen**. De echte
+  modeltests zijn uitgevoerd. Ook de HTTP-download van het foutlog is gecontroleerd
+  op ZIP-integriteit, bestandsnaam en het uitsluiten van mediabestanden.
+- De [native Windows-workflow](https://github.com/henkdepotvis0180/Multitrackert-Audio/actions/runs/41240362988)
+  heeft de volledige testsuite en de werkelijke verpakte app succesvol uitgevoerd.
+  De regressietests houden een leeshandle open tijdens vervanging, bootsen een
+  tijdelijke Windows-blokkade na en laten meerdere threads en processen tegelijk
+  status schrijven. Een blijvende schrijffout behoudt de vorige geldige status.
+- Installeren, een draaiende app bijwerken, verouderde programmabestanden verwijderen
+  en de-installeren zijn geslaagd. Opgeslagen WAV-, MP4- en ZIP-bestanden behielden
+  hun SHA-256-checksums na update en de-installatie.
+
+Dit controleert de Windows-bestandsvergrendelingsfout, niet iedere mogelijke oorzaak
+van geweigerde toegang op een gebruikers-pc. Als Windows een bestand blijvend blokkeert,
+kan het foutlog helpen de resterende oorzaak te onderzoeken.
+
+De volledige Windows-workflow en publicatie zijn geslaagd. De gepubliceerde
+[installer 0.3.1](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/tag/v0.3.1)
+is opnieuw gedownload (850.787.017 bytes) en komt overeen met de gepubliceerde SHA-256:
+`5bedc8e6083e23a7f9b175a7f1fcb4d28724292b176d03023c1e43fb3f574f4e`.
