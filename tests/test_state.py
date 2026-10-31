@@ -128,3 +128,24 @@ def test_locked_interrupted_job_does_not_block_new_uploads(tmp_path, monkeypatch
     assert (path / "status.json").is_file()
     ident, new_folder = jobs.reserve()
     assert jobs.active == ident and read_json(new_folder / "status.json")["state"] == "uploading"
+
+
+def test_status_writers_in_separate_processes_are_serialized(tmp_path):
+    import subprocess
+
+    path = tmp_path / "status.json"
+    atomic_json(path, {"step": -1})
+    code = 'from pathlib import Path; import sys; from multitrack.state import atomic_json; p=Path(sys.argv[1]); [atomic_json(p,{"writer":sys.argv[2],"step":i}) for i in range(20)]'
+    processes = [
+        subprocess.Popen(
+            [sys.executable, "-c", code, str(path), str(i)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        for i in range(4)
+    ]
+    for process in processes:
+        output, error = process.communicate(timeout=30)
+        assert process.returncode == 0, (output, error)
+    assert read_json(path)["step"] == 19
+    assert not list(tmp_path.glob("*.tmp"))

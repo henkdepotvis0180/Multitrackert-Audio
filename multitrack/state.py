@@ -2,8 +2,51 @@ import json
 import os
 import sys
 import tempfile
+import threading
 import time
+from contextlib import contextmanager
 from pathlib import Path
+
+_write_locks = {}
+_write_locks_guard = threading.Lock()
+
+
+@contextmanager
+def json_write_lock(path):
+    key = os.path.normcase(str(path.resolve()))
+    with _write_locks_guard:
+        lock = _write_locks.setdefault(key, threading.RLock())
+    with lock:
+        # Serialize writers across processes too. Readers remain non-blocking.
+        with (path.parent / ("." + path.name + ".lock")).open("a+b") as f:
+            if os.fstat(f.fileno()).st_size == 0:
+                f.write(b"0")
+                f.flush()
+            deadline = time.monotonic() + 5
+            while True:
+                try:
+                    if sys.platform == "win32":
+                        import msvcrt
+
+                        f.seek(0)
+                        msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+                    else:
+                        import fcntl
+
+                        fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except OSError:
+                    if time.monotonic() >= deadline:
+                        raise
+                    time.sleep(0.02)
+            try:
+                yield
+            finally:
+                if sys.platform == "win32":
+                    f.seek(0)
+                    msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
 
 def replace_file(source, destination):
@@ -27,6 +70,11 @@ def replace_file(source, destination):
 
 
 def atomic_json(path: Path, value: dict):
+    with json_write_lock(path):
+        _atomic_json(path, value)
+
+
+def _atomic_json(path: Path, value: dict):
     # Every writer owns its temp file. Readers may poll while another process writes.
     tmp = None
     try:

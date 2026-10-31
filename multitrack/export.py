@@ -335,7 +335,7 @@ def package(folder, output, info, segments, overlaps, progress, hardware, proces
 
 
 def make_zip(folder, output, progress):
-    files = [f for f in sorted(output.rglob("*")) if f.is_file()]
+    files = [f for f in sorted(output.rglob("*")) if f.is_file() and not f.name.endswith(".lock")]
     total_bytes = sum(f.stat().st_size for f in files)
     written, last_update = 0, 0.0
     with zipfile.ZipFile(
