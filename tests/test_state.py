@@ -103,3 +103,25 @@ def test_diagnostic_export_contains_logs_but_no_media_or_environment(tmp_path):
         assert "server.log" in z.namelist()
         assert "jobs/example/worker.log" in z.namelist()
         assert not any(n.endswith((".wav", ".mp4")) for n in z.namelist())
+
+
+def test_locked_interrupted_job_does_not_block_new_uploads(tmp_path, monkeypatch):
+    import multitrack.app as module
+    from multitrack.app import Jobs
+
+    path = tmp_path / "oldjob"
+    path.mkdir()
+    atomic_json(path / "status.json", {"state": "running"})
+
+    def blocked(target, value):
+        if target.parent == path:
+            raise PermissionError("persistent target lock")
+        return atomic_json(target, value)
+
+    monkeypatch.setattr(module, "atomic_json", blocked)
+    jobs = Jobs(tmp_path)
+    assert jobs.active is None
+    assert jobs.read_status(path)["state"] == "interrupted"
+    assert (path / "status.json").is_file()
+    ident, new_folder = jobs.reserve()
+    assert jobs.active == ident and read_json(new_folder / "status.json")["state"] == "uploading"

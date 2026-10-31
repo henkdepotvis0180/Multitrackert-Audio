@@ -44,6 +44,7 @@ class Jobs:
         self.lock = threading.Lock()
         self.active = None
         self.process = None
+        self.status_errors = {}
         for folder in root.iterdir():
             if folder.is_dir() and (folder / "status.json").is_file():
                 if read_json(folder / "status.json")["state"] not in TERMINAL:
@@ -54,6 +55,13 @@ class Jobs:
                         )
                     except OSError:
                         logging.exception("Statusbestand tijdelijk niet beschikbaar: %s", folder)
+                        self.status_errors[folder.name] = {
+                            "state": "interrupted",
+                            "message": "De status kon niet worden bijgewerkt. Er draait geen verwerking voor deze opdracht. Sluit oude instanties en download het foutlog als dit blijft gebeuren.",
+                        }
+
+    def read_status(self, folder):
+        return self.status_errors.get(folder.name) or read_json(folder / "status.json")
 
     def reserve(self):
         with self.lock:
@@ -73,6 +81,7 @@ class Jobs:
             self.active, self.process = None, None
 
     def start(self, folder, module="multitrack.worker"):
+        self.status_errors.pop(folder.name, None)
         log = (folder / "worker.log").open("a")
         try:
             self.process = subprocess.Popen(
@@ -103,6 +112,10 @@ class Jobs:
                     )
             except OSError:
                 logging.exception("Status opslaan mislukt; worker log staat in %s", folder)
+                self.status_errors[folder.name] = {
+                    "state": "error",
+                    "message": "De verwerking is gestopt, maar Windows blokkeert het statusbestand. Download het foutlog. Je bron en bestaande exports blijven bewaard.",
+                }
             finally:
                 self.release()
 
@@ -233,7 +246,7 @@ def create_app(data=None):
     @app.get("/api/jobs")
     async def list_jobs(request: Request):
         return [
-            {"id": p.name, **read_json(p / "status.json"), "project": project_info(p)}
+            {"id": p.name, **request.app.state.jobs.read_status(p), "project": project_info(p)}
             for p in sorted(request.app.state.jobs.root.iterdir(), reverse=True)
             if (p / "status.json").is_file()
         ]
@@ -352,7 +365,7 @@ def create_app(data=None):
     @app.get("/api/jobs/{ident}")
     async def status(request: Request, ident: str):
         folder = job(request, ident)
-        return {**read_json(folder / "status.json"), "project": project_info(folder)}
+        return {**request.app.state.jobs.read_status(folder), "project": project_info(folder)}
 
     @app.post("/api/jobs/{ident}/mix", status_code=202)
     async def mix(request: Request, ident: str, options: MixOptions):
