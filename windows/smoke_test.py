@@ -145,4 +145,14 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        import traceback
+
+        detail = traceback.format_exc()
+        for path in Path("build/frozen-smoke").rglob("*.log"):
+            detail += "\n" + str(path) + "\n" + path.read_text(errors="replace")[-6000:]
+        encoded = detail[-14000:].replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+        print("::error title=Frozen application validation::" + encoded, flush=True)
+        raise

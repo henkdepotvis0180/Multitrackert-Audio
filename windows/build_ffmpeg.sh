@@ -5,13 +5,13 @@ build_target="${1:-windows}"
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 build_root="${2:-$repo_root/build/windows-media}"
 mkdir -p "$build_root/bin" "$build_root/source"
-archive="$build_root/source/ffmpeg-n7.1.1.tar.gz"
+archive="$build_root/source/ffmpeg-n7.1.5.tar.gz"
 if [ ! -f "$archive" ]; then
-  curl --fail --location --retry 2 https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n7.1.1.tar.gz -o "$archive"
+  curl --fail --location --retry 2 https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n7.1.5.tar.gz -o "$archive"
 fi
-echo 'f117507dc501f2a6c11f9241d8d0c3213846cfad91764361af37befd6b6c523d  '"$archive" | sha256sum --check --status
-if [ ! -d "$build_root/FFmpeg-n7.1.1" ]; then tar -xzf "$archive" -C "$build_root"; fi
-cd "$build_root/FFmpeg-n7.1.1"
+echo 'e3963a50831c985933e1a625ed566ec4c7adb5c012c34fa9f84438e1d61bdacc  '"$archive" | sha256sum --check --status
+if [ ! -d "$build_root/FFmpeg-n7.1.5" ]; then tar -xzf "$archive" -C "$build_root"; fi
+cd "$build_root/FFmpeg-n7.1.5"
 cross_options=()
 if [ "$build_target" = windows ]; then
   cross_options=(--target-os=mingw32 --arch=x86_64 --cross-prefix=x86_64-w64-mingw32- --enable-cross-compile --extra-ldflags=-static)
@@ -34,6 +34,13 @@ suffix=''
 if [ "$build_target" = windows ]; then suffix='.exe'; fi
 cp "ffmpeg$suffix" "ffprobe$suffix" "$build_root/bin/"
 cp COPYING.LGPLv2.1 "$build_root/source/"
+if [ "$build_target" = windows ]; then
+  mkdir -p "$build_root/source/toolchain-notices"
+  for notice in /usr/share/doc/mingw-w64-common/copyright /usr/share/doc/gcc-*-mingw-w64-base/copyright /usr/share/common-licenses/GPL-3; do
+    if [ -f "$notice" ]; then cp "$notice" "$build_root/source/toolchain-notices/$(basename "$(dirname "$notice")")-$(basename "$notice")"; fi
+  done
+  x86_64-w64-mingw32-gcc --version > "$build_root/source/toolchain-notices/compiler.txt"
+fi
 cp "$repo_root/windows/build_ffmpeg.sh" "$build_root/source/"
 cp ffbuild/config.mak "$build_root/source/config-$build_target.mak"
 # Source archive + exact configuration travel with the binary release.

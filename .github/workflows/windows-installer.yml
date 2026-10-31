@@ -14,20 +14,30 @@ permissions:
   contents: read
 concurrency:
   group: windows-installer-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   media:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64 make
-      - run: windows/build_ffmpeg.sh windows
+      - uses: actions/cache@v4
+        id: media-cache
+        with:
+          path: |
+            build/windows-media/bin
+            build/windows-media/source
+            build/windows-media/FFmpeg-Corresponding-Source.tar.gz
+          key: ffmpeg-windows-${{ hashFiles('windows/build_ffmpeg.sh') }}
+      - if: steps.media-cache.outputs.cache-hit != 'true'
+        run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64 make
+      - if: steps.media-cache.outputs.cache-hit != 'true'
+        run: windows/build_ffmpeg.sh windows
       - uses: actions/upload-artifact@v4
         with:
           name: windows-ffmpeg
           path: |
             build/windows-media/bin/
-            build/windows-media/source/COPYING.LGPLv2.1
+            build/windows-media/source/
             build/windows-media/FFmpeg-Corresponding-Source.tar.gz
   installer:
     needs: media
@@ -50,10 +60,18 @@ jobs:
       - run: python -m pip install --no-deps -e .
       - run: python -m pip install torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cpu
       - run: python -m pip install pyinstaller==6.16.0 pip-licenses==5.0.0
-      - run: python scripts/download_models.py
+      - uses: actions/cache@v4
+        id: model-cache
+        with:
+          path: models
+          key: offline-models-${{ hashFiles('scripts/download_models.py', 'multitrack/music.py', 'multitrack/separate.py') }}
+      - if: steps.model-cache.outputs.cache-hit != 'true'
+        run: python scripts/download_models.py
       - run: python scripts/download_test_audio.py
-      - run: python scripts/download_music_model.py
-      - run: python scripts/download_overlap_model.py
+      - if: steps.model-cache.outputs.cache-hit != 'true'
+        run: python scripts/download_music_model.py
+      - if: steps.model-cache.outputs.cache-hit != 'true'
+        run: python scripts/download_overlap_model.py
       - name: Version and native media
         id: version
         shell: pwsh

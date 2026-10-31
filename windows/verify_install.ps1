@@ -21,8 +21,19 @@ foreach ($n in 1..2) {
         if (-not $savedProjects) { throw 'No generated export to test retention' }
         Set-Content -Path (Join-Path $DataDir 'retained-audio.wav') -Value 'user audio retention sentinel'
         Set-Content -Path "$InstallDir\_internal\old-version-only.txt" -Value 'stale program file'
+        # Exercise the actual shutdown path during upgrade, not only an idle reinstall.
+        $oldProcess = Start-Process -FilePath "$InstallDir\MultitrackertAudio.exe" -PassThru
+        $ready = $false
+        foreach ($attempt in 1..120) {
+            try {
+                $health = Invoke-RestMethod http://127.0.0.1:8765/api/health
+                if ($health.desktop) { $ready = $true; break }
+            } catch { Start-Sleep -Milliseconds 500 }
+        }
+        if (-not $ready) { throw 'Could not start the old app before upgrade' }
     }
 }
+if (-not $oldProcess.HasExited) { throw 'Installer did not stop the old running app' }
 if (Test-Path "$InstallDir\_internal\old-version-only.txt") { throw 'Old program files were not replaced' }
 if (-not (Test-Path (Join-Path $DataDir 'retained-audio.wav'))) { throw 'Update removed user data' }
 foreach ($saved in $savedProjects) {

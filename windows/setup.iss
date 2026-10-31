@@ -46,7 +46,7 @@ Filename: "{app}\MultitrackertAudio.exe"; Description: "Multitrackert Audio star
 function NeedsVCRuntime: Boolean;
 var Installed, Minor: Cardinal;
 begin
-  Result := not (RegQueryDWordValue(HKLM64, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'Installed', Installed) and (Installed = 1) and RegQueryDWordValue(HKLM64, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'Minor', Minor) and (Minor >= 40));
+  Result := not (RegQueryDWordValue(HKLM64, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'Installed', Installed) and (Installed = 1) and RegQueryDWordValue(HKLM64, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'Minor', Minor) and (Minor >= 44));
 end;
 function StopExistingApp: Boolean;
 var Code, I: Integer;

@@ -39,3 +39,17 @@ te schakelen of andere gewichten stilzwijgend te accepteren.
 
 De MIT/BSD-softwarelicenties geven geen nieuwe rechten op muziek of opnames die je
 zelf verwerkt of doorlevert. Dat staat los van de gratis commerciële inzet van deze app.
+
+## Windows-distributie vanaf 0.3
+
+De CPU-installer bundelt Python (PSF-licentie), de CPU-runtime en modellen, en een eigen
+minimale FFmpeg 7.1.5-build zonder GPL/nonfree-opties of netwerkprotocollen. De volledige
+FFmpeg-broncode, configuratie, bouwscript en LGPL-licentie worden in de app én als
+releaseattachment aangeboden. Build-toolchain-notices worden bewaard. De app spreekt
+FFmpeg als afzonderlijk lokaal proces aan.
+
+Inno Setup staat commercieel gebruik toe onder zijn eigen permissieve licentie;
+zie `docs/licenses/inno-setup.txt`. De Microsoft C++ runtime wordt als ongewijzigde,
+digitaal ondertekende redistributable gebundeld en blijft onder de Microsoft-voorwaarden.
+Dependency- en runtime-licenties worden automatisch verzameld in de geïnstalleerde
+`_internal/notices`-map. De eigen applicatiecode blijft MIT.

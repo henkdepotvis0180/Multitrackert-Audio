@@ -105,7 +105,13 @@ def main():
         if module not in {"multitrack.worker", "multitrack.remix"}:
             return 2
         enable_log(folder / "worker.log")
-        return importlib.import_module(module).process(folder)
+        try:
+            return importlib.import_module(module).process(folder)
+        except Exception:
+            import traceback
+
+            traceback.print_exc()
+            return 1
     if len(sys.argv) > 1 and sys.argv[1] == "--quit":
         try:
             with local_request("/api/app/quit", "POST"):
