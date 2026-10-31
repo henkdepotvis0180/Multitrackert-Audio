@@ -81,7 +81,17 @@ jobs:
           "MULTITRACK_BUILD_VERSION=$version" >> $env:GITHUB_ENV
           (Resolve-Path 'build/windows-media/bin').Path >> $env:GITHUB_PATH
       - name: Run tests on native Windows
-        run: python -m pytest -q
+        shell: pwsh
+        run: |
+          python -m pytest -q *> build/windows-tests.log
+          $code = $LASTEXITCODE
+          Get-Content build/windows-tests.log
+          if ($code -ne 0) {
+            $tail = (Get-Content build/windows-tests.log -Tail 180) -join "`n"
+            $encoded = $tail.Replace('%','%25').Replace("`r",'%0D').Replace("`n",'%0A')
+            Write-Output "::error title=Native Windows tests::$encoded"
+            exit $code
+          }
       - name: Retain dependency and runtime notices
         shell: pwsh
         run: |
