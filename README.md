@@ -4,11 +4,14 @@ Lokale MP4-verwerking met een tijdlijn per spreker, behoud van achtergrondgeluid
 optionele muziekscheiding en een instelbare Premiere-export. **Opnames blijven op je
 computer.** Alleen de eenmalige installatie/modeldownload heeft internet nodig.
 
+**[Download Windows CPU-installer 0.4.0 (.exe)](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/download/v0.4.0/Multitrackert-Audio-Setup-0.4.0-CPU-x64.exe)**
+
+[Release, checksum en FFmpeg-broncode](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/tag/v0.4.0). De Windows-installatie-, update- en gegevensbehoudcontroles zijn geslaagd; de gepubliceerde download is op SHA-256 gecontroleerd.
+
 ## Nieuw in 0.4: radiopraat en reclame per fragment apart zetten
 
-De bronversie 0.4.0 voegt een gedetailleerde, handmatige radioselectie toe. De
-Windows-installer wordt pas gepubliceerd nadat de Windows-controles zijn geslaagd;
-de onderstaande 0.3.1-download bevat deze nieuwe bediening nog niet.
+Versie 0.4.0 voegt een gedetailleerde, handmatige radioselectie toe. De
+Windows-installer is via de downloadlink bovenaan beschikbaar, zonder GitHub-login.
 
 1. Open een bestaande voltooide analyse of analyseer een nieuwe opname. Zet
    **Muziek apart zetten** aan als ook de instrumentale muziek apart moet.
@@ -34,10 +37,6 @@ stemmenscheiding voor twee gelijktijdige stemmen en luister de losse tracks na.
 Gemiste radiostemmen in achtergrond/rest worden niet automatisch geselecteerd.
 
 ## Nieuw in 0.3: Windows-installer en lokale opslag
-
-**[Download Windows CPU-installer 0.3.1 (.exe, circa 851 MB)](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/download/v0.3.1/Multitrackert-Audio-Setup-0.3.1-CPU-x64.exe)**
-
-[Release, checksum en FFmpeg-broncode](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/tag/v0.3.1). De Windows-installatie-, update- en gegevensbehoudcontroles zijn geslaagd; de gepubliceerde download is op SHA-256 gecontroleerd.
 
 De Windows CPU-installer bevat Python, FFmpeg en de modellen. Eenmalig de `.exe`
 installeren; daarna opent de lokale website en zijn geen losse pip-/modelinstallaties
