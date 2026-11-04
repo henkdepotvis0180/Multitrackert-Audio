@@ -4,14 +4,14 @@ Lokale MP4-verwerking met een tijdlijn per spreker, behoud van achtergrondgeluid
 optionele muziekscheiding en een instelbare Premiere-export. **Opnames blijven op je
 computer.** Alleen de eenmalige installatie/modeldownload heeft internet nodig.
 
-**[Download Windows CPU-installer 0.4.0 (.exe)](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/download/v0.4.0/Multitrackert-Audio-Setup-0.4.0-CPU-x64.exe)**
+**[Download Windows CPU-installer 0.5.0 (.exe)](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/download/v0.5.0/Multitrackert-Audio-Setup-0.5.0-CPU-x64.exe)**
 
-[Release, checksum en FFmpeg-broncode](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/tag/v0.4.0). De Windows-installatie-, update- en gegevensbehoudcontroles zijn geslaagd; de gepubliceerde download is op SHA-256 gecontroleerd.
+[Release, checksum en FFmpeg-broncode](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/tag/v0.5.0). De Windows-installatie-, update- en gegevensbehoudcontroles zijn geslaagd; de gepubliceerde download is op SHA-256 gecontroleerd.
 
-## Nieuw in bronversie 0.5: bekende reclame automatisch apart zetten
+## Nieuw in 0.5: bekende reclame automatisch apart zetten
 
-De download bovenaan is nog de gepubliceerde 0.4.0-versie. De 0.5.0-installer
-wordt pas gepubliceerd na de Windows-controles.
+De Windows-installer 0.5.0 is hierboven rechtstreeks beschikbaar, zonder GitHub-login.
+De Windows-, installatie-, update- en gegevensbehoudcontroles zijn geslaagd.
 
 - Voeg een schoon reclamevoorbeeld van **2–90 seconden** toe aan **Lokale
   reclamebibliotheek**. Dat gebeurt één keer per voorbeeld en blijft op je computer.
