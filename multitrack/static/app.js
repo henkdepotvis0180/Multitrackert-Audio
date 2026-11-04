@@ -253,7 +253,6 @@ async function showResult(id, s) {
   $("fragment-preview").pause();
   $("fragment-preview").removeAttribute("src");
   const data = await api(`/api/jobs/${id}/timeline`);
-  $("result").hidden = false;
   $("download").href = `/api/jobs/${id}/download`;
   const storage = await api(`/api/jobs/${id}/storage`);
   $("output-path").textContent = `Lokale uitvoer: ${storage.output_dir} · ZIP: ${storage.zip}`;
@@ -261,6 +260,9 @@ async function showResult(id, s) {
     `${s.speakers.length} sprekers · ${data.segments.length} fragmenten · ${seconds(data.media.duration)} totaal. ${s.unseparated_overlap_count} overlapregio’s bevatten nog de oorspronkelijke mix.`;
   $("summary").className = s.unseparated_overlap_count ? "warning" : "";
   $("mix-mode").value = data.mix?.mode || "remove_radio";
+  for (const option of $("mix-mode").options) {
+    option.disabled = !!data.processing?.radio && ["remove_music", "remove_vocals"].includes(option.value);
+  }
   $("mix-button").disabled = false;
   $("mix-note").textContent = data.mix
     ? "Nieuwe mix gereed. Gebruik cleaned.wav als één audiobestand onder video.mp4, of importeer timeline.xml voor de losse tracks. removed.wav laat horen wat is weggelaten. Speel de mix niet dubbel met de losse tracks af."
@@ -451,6 +453,7 @@ async function showResult(id, s) {
     tr.append(selection);
     $("segments").append(tr);
   }
+  $("result").hidden = false;
 }
 $("mix-button").onclick = async () => {
   try {

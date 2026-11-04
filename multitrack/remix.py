@@ -35,7 +35,8 @@ def configure_mix(manifest, mode, excluded_speakers, excluded_fragments=()):
     has_reference = bool(manifest.get("processing", {}).get("radio"))
     if has_reference and mode in {"remove_music", "remove_vocals"}:
         raise ValueError(
-            "Bij referentievermindering is de radio als geheel verwijderd. Analyseer zonder referentiebestand om muziek en zang apart te kiezen."
+            "Deze analyse bevat al referentievermindering. Kies Radio weglaten of Alles behouden. "
+            "Analyseer zonder radio-referentie of reclamebibliotheek om muziek en zang afzonderlijk te kiezen."
         )
     if (
         mode in {"remove_music", "remove_radio"}

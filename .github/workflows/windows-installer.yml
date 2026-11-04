@@ -86,6 +86,11 @@ jobs:
           key: whisper-small-${{ hashFiles('multitrack/ad_text.py', 'scripts/download_ad_text_model.py') }}
       - if: steps.ad-text-cache.outputs.cache-hit != 'true'
         run: python scripts/download_ad_text_model.py
+      - if: steps.ad-text-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: models/whisper-small
+          key: whisper-small-${{ hashFiles('multitrack/ad_text.py', 'scripts/download_ad_text_model.py') }}
       - name: Version and native media
         id: version
         shell: pwsh

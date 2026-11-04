@@ -78,8 +78,12 @@ def main():
                 else "video/mp4",
             },
         )
-        with opener.open(req, timeout=20) as response:
-            return response.read()
+        try:
+            with opener.open(req, timeout=20) as response:
+                return response.read()
+        except urllib.error.HTTPError as e:
+            e.add_note(f"{path}: {e.read().decode('utf-8', errors='replace')[:2000]}")
+            raise
 
     def wait_job(ident):
         deadline = time.monotonic() + 240
@@ -124,9 +128,7 @@ def main():
             try:
                 request(
                     "/api/jobs/" + job + "/mix",
-                    json.dumps(
-                        {"mode": "remove_vocals", "excluded_fragments": [fragment]}
-                    ).encode(),
+                    json.dumps({"mode": "remove_radio", "excluded_fragments": [fragment]}).encode(),
                 )
                 break
             except urllib.error.HTTPError as e:
