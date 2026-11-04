@@ -133,8 +133,16 @@ def open_shared_text(path: Path, errors="strict"):
 
 
 def read_json(path: Path):
-    with open_shared_text(path) as f:
-        return json.load(f)
+    for attempt in range(6):
+        try:
+            with open_shared_text(path) as f:
+                return json.load(f)
+        except OSError as e:
+            # Windows can briefly hide or deny a path while ReplaceFile or a
+            # scanner changes its handles. Retry the open, not an exists check.
+            if getattr(e, "winerror", None) not in {2, 5, 32, 33} or attempt == 5:
+                raise
+            time.sleep(min(0.1, 0.01 * 2**attempt))
 
 
 class Progress:

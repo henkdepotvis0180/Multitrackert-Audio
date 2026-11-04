@@ -245,6 +245,8 @@ $("cancel").onclick = async () => {
   }
 };
 async function showResult(id, s) {
+  $("fragment-preview").pause();
+  $("fragment-preview").removeAttribute("src");
   const data = await api(`/api/jobs/${id}/timeline`);
   $("result").hidden = false;
   $("download").href = `/api/jobs/${id}/download`;
@@ -257,7 +259,7 @@ async function showResult(id, s) {
   $("mix-button").disabled = false;
   $("mix-note").textContent = data.mix
     ? "Nieuwe mix gereed. Gebruik cleaned.wav als één audiobestand onder video.mp4, of importeer timeline.xml voor de losse tracks. removed.wav laat horen wat is weggelaten. Speel de mix niet dubbel met de losse tracks af."
-    : "Achtergrond/rest wordt altijd bewaard. De exportkeuzes voor radio en zang vereisen de optie “Muziek apart zetten”. Je kunt meerdere keuzes proberen zonder opnieuw te analyseren.";
+    : "Markeer een radiospreker of losse radio-/reclamefragmenten. Radiostemmen apart zetten werkt ook zonder muziekscheiding. Je kunt de selectie aanpassen zonder opnieuw te analyseren.";
   $("processing-note").textContent = data.processing?.radio
     ? "Radiovermindering met lokale referentie toegepast. Luister cleaned.wav en de verwijderde radio na: resten of spraaklekkage blijven mogelijk. Achtergrond/rest en eventuele muziek blijven als losse tracks beschikbaar."
     : data.processing?.music
@@ -308,13 +310,13 @@ async function showResult(id, s) {
     selectLabel.append(
       select,
       document.createTextNode(
-        "Dit is radio/zang — weglaten bij de radio-/zangkeuze",
+        "Hele spreker is radio/reclame/zang — apart zetten",
       ),
     );
     div.append(label, canvas, audio, selectLabel);
     $("tracks").append(div);
   }
-  for (const track of (data.tracks || []).filter(
+  for (const track of [...(data.tracks || []), ...(data.mix_tracks || [])].filter(
     (t) => !t.id.startsWith("speaker_"),
   )) {
     const div = document.createElement("div");
@@ -326,6 +328,13 @@ async function showResult(id, s) {
     audio.preload = "none";
     audio.src = `/api/jobs/${id}/media/${track.file}`;
     div.append(label, audio);
+    if (track.id === "radio_voices") {
+      const download = document.createElement("a");
+      download.href = audio.src;
+      download.download = "radio_voices.wav";
+      download.textContent = "Download radiostemmen en reclame";
+      div.append(download);
+    }
     $("tracks").append(div);
   }
   if (data.processing?.radio || data.mix) {
@@ -377,7 +386,37 @@ async function showResult(id, s) {
       $("video").play().catch(error);
     };
     td.append(button);
+    const preview = document.createElement("button");
+    preview.textContent = "▶ Stemfragment";
+    preview.className = "secondary";
+    preview.onclick = () => {
+      $("video").pause();
+      const audio = $("fragment-preview");
+      audio.src = `/api/jobs/${id}/media/speaker_${String(x.speaker).padStart(2, "0")}.wav`;
+      audio.currentTime = x.start;
+      audio.ontimeupdate = () => { if (audio.currentTime >= x.end) audio.pause(); };
+      audio.play().catch(error);
+    };
+    td.append(preview);
     tr.append(td);
+    const selection = document.createElement("td");
+    const label = document.createElement("label");
+    const check = document.createElement("input");
+    check.type = "checkbox";
+    check.className = "radio-fragment";
+    check.dataset.fragment = x.fragment;
+    check.checked = (data.mix?.excluded_fragments || []).includes(x.fragment);
+    label.append(check, document.createTextNode("Radio / reclame"));
+    selection.append(label);
+    const overlap = (data.overlaps || []).some(
+      (o) => o.start < x.end && o.end > x.start && o.method === "mixed",
+    );
+    if (overlap) {
+      const note = document.createElement("small");
+      note.textContent = " Gemengde overlap: ook gesprek kan meekomen.";
+      selection.append(note);
+    }
+    tr.append(selection);
     $("segments").append(tr);
   }
 }
@@ -393,6 +432,9 @@ $("mix-button").onclick = async () => {
       body: JSON.stringify({
         mode: $("mix-mode").value,
         excluded_speakers: excluded,
+        excluded_fragments: Array.from(
+          document.querySelectorAll(".radio-fragment:checked"),
+        ).map((x) => Number(x.dataset.fragment)),
       }),
     });
     $("mix-button").disabled = true;

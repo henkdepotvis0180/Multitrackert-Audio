@@ -207,13 +207,15 @@
               Alleen instrumentale muziek weglaten (zang blijft mogelijk)
             </option>
             <option value="remove_vocals">
-              Alleen aangewezen radiostem/zang weglaten (muziek behouden)
+              Radiopraat, reclame en zang apart zetten (muziek behouden)
             </option>
           </select>
         </label>
         <p class="hint">
-          Voor radio/zang: beluister hieronder de stemtracks en vink de
-          radiostemmen aan. Een artiest wordt niet automatisch op naam herkend.
+          Beluister de stemtracks en markeer een hele radiospreker, of kies
+          afzonderlijke radio-/reclamefragmenten in de tabel hieronder.
+          De selectie wordt bewaard als radio_voices.wav op een aparte, gedempte
+          Premiere-track. Er is geen automatische herkenning van radio-inhoud.
           Als radio en vergadering samen op een track staan, verwijder je die
           samen: kies die track dan niet en probeer een betere analyse met
           stemmenscheiding. Niet-herkende zang kan ook in achtergrond/rest
@@ -222,6 +224,8 @@
         <button id="mix-button">Gekozen mix en Premiere-export maken</button>
         <p id="mix-note" class="hint"></p>
         <div id="tracks"></div>
+        <p>Beluister een losse stem per fragment voordat je radio of reclame markeert:</p>
+        <audio id="fragment-preview" controls preload="none"></audio>
         <div class="table-wrap">
           <table>
             <thead>
@@ -231,6 +235,7 @@
                 <th>Start</th>
                 <th>Einde</th>
                 <th>Afspelen</th>
+                <th>Radio / reclame</th>
               </tr>
             </thead>
             <tbody id="segments"></tbody>

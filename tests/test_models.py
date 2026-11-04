@@ -72,7 +72,9 @@ def test_real_upload_to_download(tmp_path, monkeypatch):
         ident = response.json()["id"]
         deadline = time.monotonic() + 180
         while time.monotonic() < deadline:
-            status = client.get(f"/api/jobs/{ident}").json()
+            response = client.get(f"/api/jobs/{ident}")
+            assert response.status_code == 200, response.text
+            status = response.json()
             if status["state"] in {"done", "error", "cancelled"}:
                 break
             time.sleep(0.2)

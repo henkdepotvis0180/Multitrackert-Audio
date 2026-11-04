@@ -148,3 +148,23 @@ def test_status_writers_in_separate_processes_are_serialized(tmp_path):
         assert process.returncode == 0, (output, error)
     assert read_json(path)["step"] == 19
     assert not list(tmp_path.glob("*.tmp"))
+
+
+def test_windows_transient_status_open_is_retried(tmp_path, monkeypatch):
+    path = tmp_path / 'status.json'
+    atomic_json(path, {'state': 'running'})
+    original_open = state_module.open_shared_text
+    attempts = 0
+
+    def transient(path):
+        nonlocal attempts
+        attempts += 1
+        if attempts < 3:
+            error = FileNotFoundError('replacement in progress')
+            error.winerror = 2
+            raise error
+        return original_open(path)
+
+    monkeypatch.setattr(state_module, 'open_shared_text', transient)
+    assert read_json(path) == {'state': 'running'}
+    assert attempts == 3

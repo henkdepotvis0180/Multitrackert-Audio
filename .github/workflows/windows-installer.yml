@@ -1,6 +1,13 @@
 name: Windows installer
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'windows/**'
+      - 'multitrack/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - '.github/workflows/windows-installer.yml'
   push:
     branches: [main]
     paths:
@@ -153,6 +160,7 @@ jobs:
             build/frozen-smoke/data/jobs/*/worker.log
             ${{ runner.temp }}/multitrack-install.log
   release:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: installer
     runs-on: ubuntu-latest
     permissions:
