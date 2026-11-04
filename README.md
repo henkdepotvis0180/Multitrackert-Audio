@@ -8,6 +8,43 @@ computer.** Alleen de eenmalige installatie/modeldownload heeft internet nodig.
 
 [Release, checksum en FFmpeg-broncode](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/tag/v0.4.0). De Windows-installatie-, update- en gegevensbehoudcontroles zijn geslaagd; de gepubliceerde download is op SHA-256 gecontroleerd.
 
+## Nieuw in bronversie 0.5: bekende reclame automatisch apart zetten
+
+De download bovenaan is nog de gepubliceerde 0.4.0-versie. De 0.5.0-installer
+wordt pas gepubliceerd na de Windows-controles.
+
+- Voeg een schoon reclamevoorbeeld van **2–90 seconden** toe aan **Lokale
+  reclamebibliotheek**. Dat gebeurt één keer per voorbeeld en blijft op je computer.
+- **Bekende reclame zoeken en verminderen** zoekt in de hele opname naar sterke
+  geluidsmatches, ook bij herhaling. Het geschatte reclamegeluid komt op `radio.wav`;
+  `cleaned.wav` bevat de opname na die vermindering. Originele audio blijft bewaard.
+- Gebruik een echte spot of losse slogan. Een kunstmatig herhaalde slogan is geen
+  voorbeeld van een volledige reclame. Een ander zinnetje met dezelfde stem wordt
+  door geluidsvergelijking niet automatisch herkend.
+- **Mogelijke reclametekst aanwijzen** gebruikt optioneel lokaal Whisper Small.
+  De korte beginlijst bevat AH, Kruidvat en Lidl; je kunt eigen herkenningszinnen
+  van minstens drie woorden toevoegen. Er worden geen complete reclamescripts
+  gekopieerd. Het is geen volledige of actuele lijst van alle Spotify-reclames.
+- Tekst geeft alleen controle-aanwijzingen in vensters van maximaal 16 seconden.
+  Ook een echt gesprek kan een slogan noemen; gezongen of overstemde tekst kan
+  verkeerd worden verstaan. Tekst alleen wist daarom geen audio.
+- Automatische herkenning stopt niet meer bij meer dan 12 stemgroepen. De twaalf
+  groepen met de meeste spreektijd krijgen losse tracks; overige stemmen blijven
+  in achtergrond/rest en staan met hun tijden in `reclame-analyse.json`. Dit zegt
+  niet welke groepen radio of echte gesprekssprekers zijn.
+
+De Windows 0.5-installer bevat het optionele tekstmodel. Voor de broninstallatie:
+
+```bash
+python scripts/download_ad_text_model.py
+```
+
+Dat model is alleen nodig voor tekstaanwijzingen; geluidsvergelijking werkt zonder
+nieuwe Python-pakketten of tekstmodel. Verwerking doet geen netwerkdownloads.
+Luister de verwijderde radio én de overgebleven mix na. Andere versies, galm,
+klokdrift, lage radiovolumes en overlappende stemmen kunnen matches of scheiding
+beperken. [Metingen en beperkingen](docs/ad-reference-validation.md).
+
 ## Nieuw in 0.4: radiopraat en reclame per fragment apart zetten
 
 Versie 0.4.0 voegt een gedetailleerde, handmatige radioselectie toe. De

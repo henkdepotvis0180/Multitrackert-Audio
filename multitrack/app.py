@@ -11,6 +11,7 @@ import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
+from urllib.parse import unquote
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
@@ -19,6 +20,8 @@ from pydantic import BaseModel, Field
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from . import config
+from .ad_text import ready as ad_text_ready
+from .ads import MAX_REFERENCES, library_entries
 from .diagnostics import log_bundle
 from .diarize import model_ready
 from .hardware import inspect_hardware
@@ -204,6 +207,7 @@ def create_app(data=None):
             "models_ready": model_ready(config.MODELS),
             "separation_ready": ready(config.MODELS),
             "music_ready": music_ready(config.MODELS),
+            "ad_text_ready": ad_text_ready(config.MODELS),
             "max_bytes": config.MAX_BYTES,
             "max_minutes": config.MAX_SECONDS // 60,
         }
@@ -233,6 +237,68 @@ def create_app(data=None):
             "data_dir": str(request.app.state.jobs.root.parent.resolve()),
             "projects_dir": str(request.app.state.jobs.root.resolve()),
         }
+
+    @app.get("/api/ad-library")
+    async def ad_library(request: Request):
+        return library_entries(request.app.state.jobs.root.parent / "ad-library")
+
+    @app.post("/api/ad-library", status_code=201)
+    async def add_ad_reference(request: Request):
+        from .media import decode_reference
+
+        manager = request.app.state.jobs
+        library = manager.root.parent / "ad-library"
+        library.mkdir(exist_ok=True)
+        folder = library / uuid.uuid4().hex
+        folder.mkdir()
+        try:
+            size = 0
+            with (folder / "input.upload").open("wb") as f:
+                async for block in request.stream():
+                    size += len(block)
+                    if size > 64 * 1024**2:
+                        raise HTTPException(413, "Reclamevoorbeeld is te groot (maximaal 64 MiB).")
+                    f.write(block)
+            await asyncio.to_thread(
+                decode_reference, folder / "input.upload", folder / "reference.wav", 48000, 90
+            )
+            import soundfile as sf
+
+            duration = sf.info(folder / "reference.wav").duration
+            if duration < 2:
+                raise HTTPException(422, "Kies minstens twee seconden reclamegeluid.")
+            name = unquote(request.headers.get("x-filename", "Reclamevoorbeeld"))[:200]
+            with manager.lock:
+                if len(library_entries(library)) >= MAX_REFERENCES:
+                    raise HTTPException(
+                        409, "Maximaal 32 reclamevoorbeelden. Verwijder eerst een voorbeeld."
+                    )
+                atomic_json(folder / "metadata.json", {"name": name, "duration": duration})
+            (folder / "input.upload").unlink()
+        except HTTPException:
+            shutil.rmtree(folder, ignore_errors=True)
+            raise
+        except (OSError, ValueError, RuntimeError) as e:
+            shutil.rmtree(folder, ignore_errors=True)
+            raise HTTPException(422, str(e)) from e
+        except BaseException:
+            shutil.rmtree(folder, ignore_errors=True)
+            raise
+        return {"id": folder.name, "name": name, "duration": duration}
+
+    @app.delete("/api/ad-library/{ident}")
+    async def delete_ad_reference(request: Request, ident: str):
+        manager = request.app.state.jobs
+        with manager.lock:
+            if manager.active is not None:
+                raise HTTPException(409, "Wacht tot de huidige analyse klaar is.")
+            if not re.fullmatch(r"[a-f0-9]{32}", ident):
+                raise HTTPException(404, "Onbekend reclamevoorbeeld.")
+            folder = manager.root.parent / "ad-library" / ident
+            if not (folder / "metadata.json").is_file():
+                raise HTTPException(404, "Onbekend reclamevoorbeeld.")
+            shutil.rmtree(folder)
+        return {"deleted": True}
 
     @app.post("/api/storage/open")
     async def open_storage(request: Request):
@@ -267,6 +333,9 @@ def create_app(data=None):
         music: bool = False,
         reference: bool = False,
         reference_offset: float | None = None,
+        known_ads: bool = False,
+        ad_text: bool = False,
+        ad_phrases: str = "",
     ):
         if reference_offset is not None and (
             not math.isfinite(reference_offset) or abs(reference_offset) > 3600
@@ -276,6 +345,12 @@ def create_app(data=None):
             raise HTTPException(422, "Kies auto of cpu als apparaat.")
         if not 0 <= speakers <= 12:
             raise HTTPException(422, "Kies 0 (automatisch) tot 12 sprekers.")
+        if len(ad_phrases) > 2000 or len(ad_phrases.splitlines()) > 20:
+            raise HTTPException(422, "Gebruik maximaal 20 eigen herkenningszinnen en 2000 tekens.")
+        if ad_text and not ad_text_ready(config.MODELS):
+            raise HTTPException(
+                503, "Tekstmodel ontbreekt. Voer scripts/download_ad_text_model.py uit."
+            )
         if not model_ready(config.MODELS):
             raise HTTPException(
                 503, "Modellen ontbreken. Voer eerst de modeldownload uit (README)."
@@ -290,6 +365,17 @@ def create_app(data=None):
         if length.isdigit() and int(length) > config.MAX_BYTES:
             raise HTTPException(413, "Bestand is te groot.")
         manager = request.app.state.jobs
+        ad_ids = (
+            [e["id"] for e in library_entries(manager.root.parent / "ad-library")]
+            if known_ads
+            else []
+        )
+        if known_ads and not ad_ids:
+            raise HTTPException(
+                422, "Voeg eerst een reclamevoorbeeld toe aan de lokale reclamebibliotheek."
+            )
+        if known_ads and reference:
+            raise HTTPException(422, "Kies de reclamebibliotheek of een losse radio-referentie.")
         ident, folder = manager.reserve()
         size = 0
         try:
@@ -311,6 +397,9 @@ def create_app(data=None):
                     "music": music,
                     "reference": reference,
                     "reference_offset": reference_offset,
+                    "ad_reference_ids": ad_ids,
+                    "ad_text": ad_text,
+                    "ad_phrases": [p.strip() for p in ad_phrases.splitlines() if p.strip()],
                 },
             )
             atomic_json(
@@ -467,7 +556,14 @@ def create_app(data=None):
             raise HTTPException(409, "Analyse is nog niet klaar.")
         if name == "input.mp4":
             return FileResponse(folder / name, media_type="video/mp4")
-        if name in {"background.wav", "music.wav", "radio.wav", "radio_voices.wav", "cleaned.wav", "removed.wav"}:
+        if name in {
+            "background.wav",
+            "music.wav",
+            "radio.wav",
+            "radio_voices.wav",
+            "cleaned.wav",
+            "removed.wav",
+        }:
             path = folder / "export" / name
         elif re.fullmatch(r"speaker_\d{2}\.wav", name):
             path = folder / "export" / "speakers" / name

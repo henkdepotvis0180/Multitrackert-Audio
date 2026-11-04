@@ -75,6 +75,18 @@
           browserdownload wordt onderbroken. Alleen “Verwijder” bij een opdracht verwijdert dat project.</p>
       </section>
       <section>
+        <h2>Lokale reclamebibliotheek</h2>
+        <p>Voeg een schoon reclamefragment van 2–90 seconden toe. Bekende reclame zoeken
+          vergelijkt het geluid met je opname en zet sterk overeenkomende audio apart.
+          Een sloganvoorbeeld herkent alleen dat geluid, niet automatisch de hele reclame.</p>
+        <label>Reclamevoorbeeld (audio of video)
+          <input id="ad-file" type="file" accept="audio/*,video/*" />
+        </label>
+        <button id="ad-add" class="secondary">Reclamevoorbeeld bewaren</button>
+        <p id="ad-library-status" class="hint" aria-live="polite"></p>
+        <div id="ad-library"></div>
+      </section>
+      <section>
         <h2>1. Kies je opname</h2>
         <form id="upload-form">
           <label class="drop"
@@ -116,6 +128,22 @@
               stemmen scheiden (experimenteel)</label
             >
           </div>
+          <label class="check">
+            <input id="known-ads" type="checkbox" />
+            Bekende reclame uit mijn lokale bibliotheek zoeken en verminderen
+          </label>
+          <p class="hint">Doorzoekt de hele opname, ook bij herhaalde spots. Alleen sterke
+            geluidsmatches worden geschat en apart gezet. Controleer cleaned.wav en radio.wav;
+            andere montages, galm en gelijktijdige spraak kunnen resten geven.</p>
+          <label class="check"><input id="ad-text" type="checkbox" disabled />
+            Mogelijke reclametekst aanwijzen (extra verwerkingstijd)</label>
+          <p id="ad-text-status" class="hint"></p>
+          <label>Extra herkenningszinnen, één per regel (optioneel)
+            <textarea id="ad-phrases" rows="3" maxlength="2000" placeholder="Een herkenningszin van minstens drie woorden"></textarea>
+          </label>
+          <p class="hint">De tekstlijst begint met korte herkenningszinnen van AH, Kruidvat en Lidl.
+            Dit is geen volledige lijst van Spotify-reclames. Tekst geeft alleen aanwijzingen;
+            ook een gesprek kan zo'n zin bevatten. Gezongen of overstemde tekst kan worden gemist.</p>
           <label class="check">
             <input id="music" type="checkbox" disabled />
             Muziek apart zetten (Hybrid Demucs; extra model nodig)
@@ -189,6 +217,7 @@
         <button id="open-output" class="secondary">Open lokale uitvoermap</button>
         <p id="output-path" class="hint storage-path"></p>
         <p id="processing-note" class="hint"></p>
+        <div id="ad-matches"></div>
         <p class="hint">
           Klik op de tijdlijn om het origineel op die positie af te spelen.
           Sprekerlabels zijn schattingen; luister ze na. De audioplayers spelen

@@ -4,6 +4,7 @@ import importlib.metadata
 import sys
 
 from . import __version__
+from .ad_text import ready as ad_text_ready
 from .config import MODELS
 from .diarize import model_ready
 from .music import MODEL_NAME
@@ -24,6 +25,14 @@ def installation_status(ffmpeg_ready, cuda_available=False):
     torchaudio = package_version("torchaudio")
     runtime_ok = all(v and v.split("+")[0] == "2.8.0" for v in [torch, torchaudio])
     checks = [
+        {
+            "name": "Optioneel: reclametekst herkennen (Whisper Small, Nederlands)",
+            "installed": ad_text_ready(MODELS),
+            "required": False,
+            "detail": "Geeft tekstaanwijzingen; gezongen slogans kunnen verkeerd worden verstaan. Tekst wist geen audio.",
+            "windows": f"{windows} scripts/download_ad_text_model.py",
+            "posix": f"{posix} scripts/download_ad_text_model.py",
+        },
         {
             "name": "Python 3.12 (64-bit)",
             "installed": sys.version_info[:2] == (3, 12) and sys.maxsize > 2**32,
@@ -83,7 +92,7 @@ def installation_status(ffmpeg_ready, cuda_available=False):
         "update_note": (
             "Windows CPU-editie: Python, FFmpeg en de modellen zijn inbegrepen. Je hoeft geen losse dependencies te installeren."
             if getattr(sys, "frozen", False)
-            else "Versie 0.4 gebruikt dezelfde dependencies en modellen als 0.3. Bestaande analyses kun je opnieuw mixen met radioselectie per fragment."
+            else "Versie 0.5 gebruikt dezelfde Python-pakketten. Alleen voor reclametekst is het nieuwe optionele Whisper Small-model nodig. De reclamebibliotheek werkt zonder dat model."
         ),
         "checks": checks,
     }

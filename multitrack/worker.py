@@ -9,7 +9,9 @@ os.environ["TRANSFORMERS_OFFLINE"] = "1"
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 
 from . import config  # noqa: E402
-from .diarize import diarize, model_ready  # noqa: E402
+from .ad_text import scan_text  # noqa: E402
+from .ads import reduce_known_ads  # noqa: E402
+from .diarize import bound_voice_tracks, diarize, model_ready  # noqa: E402
 from .export import package, render  # noqa: E402
 from .hardware import inspect_hardware  # noqa: E402
 from .media import decode_reference, extract, make_analysis, probe  # noqa: E402
@@ -51,6 +53,18 @@ def process(folder):
         progress.check()
         source = folder / "original.wav"
         processing = {}
+        if options.get("ad_reference_ids"):
+            reduction = reduce_known_ads(
+                source,
+                folder.parent.parent / "ad-library",
+                options["ad_reference_ids"],
+                folder,
+                progress,
+            )
+            processing["ad_detection"] = reduction
+            if reduction["applied"]:
+                processing["radio"] = reduction
+                source = folder / "cleaned.wav"
         if options.get("reference"):
             progress.update("Radio-referentie voorbereiden")
             decode_reference(
@@ -66,11 +80,22 @@ def process(folder):
         if source.name != "original.wav":
             progress.update("Stemmen voorbereiden voor herkenning")
             make_analysis(source, folder / "analysis.wav")
+        if options.get("ad_text"):
+            processing["ad_text"] = scan_text(
+                source,
+                config.MODELS,
+                progress,
+                options.get("ad_phrases", []),
+                min(4, hardware["inference_threads"]),
+            )
         analysis, _ = sf.read(folder / "analysis.wav", dtype="float32")
         progress.update("Sprekers herkennen")
         segments = diarize(
             analysis, config.MODELS, options["speakers"], hardware["inference_threads"], progress
         )
+        segments, overflow = bound_voice_tracks(segments)
+        if overflow:
+            processing["voice_group_overflow"] = overflow
         output, overlaps = render(
             folder,
             info,

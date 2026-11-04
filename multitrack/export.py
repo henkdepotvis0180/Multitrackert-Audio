@@ -330,6 +330,27 @@ def package(folder, output, info, segments, overlaps, progress, hardware, proces
         "De XML-import is niet getest in Premiere/Clipchamp; de WAV-methode is de basis.\n",
         encoding="utf-8",
     )
+    if processing and any(
+        k in processing for k in ("ad_detection", "ad_text", "voice_group_overflow")
+    ):
+        (output / "reclame-analyse.json").write_text(
+            json.dumps(
+                {
+                    k: processing[k]
+                    for k in ("ad_detection", "ad_text", "voice_group_overflow")
+                    if k in processing
+                },
+                indent=2,
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+        with (output / "LEESMIJ.txt").open("a", encoding="utf-8") as f:
+            f.write(
+                "\nReclame-analyse: zie reclame-analyse.json voor geluidsmatches en eventuele tekstaanwijzingen.\n"
+            )
+            if processing.get("voice_group_overflow"):
+                f.write(processing["voice_group_overflow"]["note"] + "\n")
     make_zip(folder, output, progress)
     return manifest
 

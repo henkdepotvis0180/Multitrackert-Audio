@@ -53,3 +53,16 @@ zie `docs/licenses/inno-setup.txt`. De Microsoft C++ runtime wordt als ongewijzi
 digitaal ondertekende redistributable gebundeld en blijft onder de Microsoft-voorwaarden.
 Dependency- en runtime-licenties worden automatisch verzameld in de geïnstalleerde
 `_internal/notices`-map. De eigen applicatiecode blijft MIT.
+
+## Toegevoegd in 0.5
+
+- **Whisper Small**: optionele lokale Nederlandse tekstherkenning via sherpa-onnx.
+  De modellen zijn de INT8-ONNX-conversies uit de officiële sherpa-onnx-release
+  `sherpa-onnx-whisper-small.tar.bz2`. De geselecteerde bestanden zijn gepind op
+  SHA-256 in `multitrack/ad_text.py`; de downloader controleert elk bestand.
+  Whisper-code en -gewichten zijn MIT: https://github.com/openai/whisper/blob/main/LICENSE.
+  Een kopie staat in `docs/licenses/whisper-MIT.txt`. De trainingsdata worden niet meegeleverd.
+- De korte herkenningszinnen en hun bronverwijzingen staan in `multitrack/ad_text.py`.
+  Het is een beperkte lijst herkenningsaanwijzingen, geen archief van complete reclamescripts.
+- Audio in de lokale reclamebibliotheek wordt door de gebruiker toegevoegd. De app
+  publiceert die voorbeelden niet en bevat geen audio uit de uploads van deze chatsessie.

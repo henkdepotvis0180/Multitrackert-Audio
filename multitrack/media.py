@@ -131,7 +131,7 @@ def make_analysis(source, destination):
     )
 
 
-def decode_reference(source, destination, rate):
+def decode_reference(source, destination, rate, max_seconds=1800):
     raw = json.loads(
         run(
             ["ffprobe", "-v", "error", "-show_format", "-show_streams", "-of", "json", str(source)],
@@ -141,8 +141,8 @@ def decode_reference(source, destination, rate):
     if not any(s["codec_type"] == "audio" for s in raw["streams"]):
         raise MediaError("Referentiebestand bevat geen audio.")
     duration = float(raw["format"].get("duration", 0))
-    if not 1 <= duration <= 1800:
-        raise MediaError("Radio-referentie moet tussen 1 seconde en 30 minuten duren.")
+    if not 1 <= duration <= max_seconds:
+        raise MediaError(f"Radio-referentie moet tussen 1 en {max_seconds} seconden duren.")
     run(
         [
             "ffmpeg",
