@@ -184,8 +184,14 @@ def create_app(data=None):
         if not re.fullmatch(r"[a-f0-9]{32}", ident):
             raise HTTPException(404, "Onbekende opdracht.")
         folder = request.app.state.jobs.root / ident
-        if not (folder / "status.json").is_file():
+        if not folder.is_dir():
             raise HTTPException(404, "Onbekende opdracht.")
+        # A stat on the hot status path can briefly report absence on Windows
+        # during replacement. Read through the shared, retrying reader instead.
+        try:
+            request.app.state.jobs.read_status(folder)
+        except FileNotFoundError as e:
+            raise HTTPException(404, "Onbekende opdracht.") from e
         return folder
 
     @app.get("/api/system")

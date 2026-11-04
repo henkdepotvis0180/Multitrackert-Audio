@@ -111,3 +111,21 @@ def test_music_missing_model_is_explicit(tmp_path, monkeypatch):
             ).status_code
             == 422
         )
+
+
+def test_status_does_not_report_unknown_job_from_a_transient_file_stat(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    folder = tmp_path / 'jobs' / ('a' * 32)
+    folder.mkdir(parents=True)
+    atomic_json(folder / 'status.json', {'state': 'done'})
+    with TestClient(create_app(tmp_path)) as client:
+        original_stat = Path.is_file
+
+        def hidden_during_replace(path):
+            return False if path == folder / 'status.json' else original_stat(path)
+
+        monkeypatch.setattr(Path, 'is_file', hidden_during_replace)
+        response = client.get('/api/jobs/' + 'a' * 32)
+        assert response.status_code == 200, response.text
+        assert response.json()['state'] == 'done'
