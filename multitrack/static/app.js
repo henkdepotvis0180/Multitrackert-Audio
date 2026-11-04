@@ -5,6 +5,7 @@ let current = null,
   busy = false;
 let initialOptions = true;
 let installation = null;
+let adLibraryLoaded = false;
 const headers = { "X-Multitrack": "local" };
 const terminal = new Set(["done", "error", "cancelled", "interrupted"]);
 function seconds(n) {
@@ -113,6 +114,10 @@ async function system() {
     $("start").disabled = !s.models_ready || !s.ffmpeg || busy;
     $("separate").disabled = !s.separation_ready || busy;
     $("music").disabled = !s.music_ready || busy;
+    $("ad-text").disabled = !s.ad_text_ready || busy;
+    $("ad-text-status").textContent = s.ad_text_ready
+      ? "Lokaal tekstmodel gereed. Aanwijzingen worden getoond bij de fragmenten; tekst verwijdert geen audio."
+      : "Optioneel tekstmodel ontbreekt: python scripts/download_ad_text_model.py. Geluidsvergelijking met de reclamebibliotheek werkt ook zonder dit model.";
     if (initialOptions) {
       $("music").checked = s.music_ready;
       $("separate").checked = s.separation_ready;
@@ -146,7 +151,7 @@ $("upload-form").addEventListener("submit", (event) => {
   const xhr = new XMLHttpRequest();
   xhr.open(
     "POST",
-    `/api/jobs?speakers=${$("speakers").value}&separate=${$("separate").checked}&device=${$("device").value}&music=${$("music").checked}&reference=${!!referenceFile}${referenceOffset ? "&reference_offset=" + encodeURIComponent(referenceOffset) : ""}`,
+    `/api/jobs?speakers=${$("speakers").value}&separate=${$("separate").checked}&device=${$("device").value}&music=${$("music").checked}&known_ads=${$("known-ads").checked}&ad_text=${$("ad-text").checked}&ad_phrases=${encodeURIComponent($("ad-phrases").value)}&reference=${!!referenceFile}${referenceOffset ? "&reference_offset=" + encodeURIComponent(referenceOffset) : ""}`,
   );
   xhr.setRequestHeader("X-Multitrack", "local");
   xhr.setRequestHeader("Content-Type", "video/mp4");
@@ -248,7 +253,6 @@ async function showResult(id, s) {
   $("fragment-preview").pause();
   $("fragment-preview").removeAttribute("src");
   const data = await api(`/api/jobs/${id}/timeline`);
-  $("result").hidden = false;
   $("download").href = `/api/jobs/${id}/download`;
   const storage = await api(`/api/jobs/${id}/storage`);
   $("output-path").textContent = `Lokale uitvoer: ${storage.output_dir} · ZIP: ${storage.zip}`;
@@ -256,16 +260,36 @@ async function showResult(id, s) {
     `${s.speakers.length} sprekers · ${data.segments.length} fragmenten · ${seconds(data.media.duration)} totaal. ${s.unseparated_overlap_count} overlapregio’s bevatten nog de oorspronkelijke mix.`;
   $("summary").className = s.unseparated_overlap_count ? "warning" : "";
   $("mix-mode").value = data.mix?.mode || "remove_radio";
+  for (const option of $("mix-mode").options) {
+    option.disabled = !!data.processing?.radio && ["remove_music", "remove_vocals"].includes(option.value);
+  }
   $("mix-button").disabled = false;
   $("mix-note").textContent = data.mix
     ? "Nieuwe mix gereed. Gebruik cleaned.wav als één audiobestand onder video.mp4, of importeer timeline.xml voor de losse tracks. removed.wav laat horen wat is weggelaten. Speel de mix niet dubbel met de losse tracks af."
     : "Markeer een radiospreker of losse radio-/reclamefragmenten. Radiostemmen apart zetten werkt ook zonder muziekscheiding. Je kunt de selectie aanpassen zonder opnieuw te analyseren.";
   $("processing-note").textContent = data.processing?.radio
-    ? "Radiovermindering met lokale referentie toegepast. Luister cleaned.wav en de verwijderde radio na: resten of spraaklekkage blijven mogelijk. Achtergrond/rest en eventuele muziek blijven als losse tracks beschikbaar."
+    ? `Radiovermindering met lokale referentie toegepast. ${data.processing.radio.matches ? data.processing.radio.matches.length + " bekende reclamefragmenten gevonden. " : ""}Luister cleaned.wav en de verwijderde radio na: resten of spraaklekkage blijven mogelijk. Achtergrond/rest en eventuele muziek blijven als losse tracks beschikbaar.`
     : data.processing?.music
       ? "Muziek is apart gezet; zang en vergaderstemmen kunnen samen in de stemmix blijven. Dit is geen gegarandeerde verwijdering van een radiozanger."
       : "Achtergrond/rest bewaart geluid buiten de sprekertracks. Muziek onder spraak kan nog in die sprekertracks zitten. Voor scheiding: gebruik de optie “Muziek apart zetten”.";
+  if (data.processing?.ad_detection && !data.processing.ad_detection.applied) {
+    $("processing-note").textContent += " Geen sterke match met de reclamebibliotheek; de audio is daarvoor ongewijzigd gebleven.";
+  }
+  if (data.processing?.voice_group_overflow) {
+    $("processing-note").textContent += " " + data.processing.voice_group_overflow.note;
+  }
+  if (data.processing?.ad_text) {
+    $("processing-note").textContent += ` ${data.processing.ad_text.candidates.length} tekstvensters met mogelijke reclame. ${data.processing.ad_text.note}`;
+  }
   $("video").src = `/api/jobs/${id}/media/input.mp4`;
+  $("ad-matches").replaceChildren();
+  for (const match of (data.processing?.ad_detection?.matches || [])) {
+    const jump = document.createElement("button");
+    jump.className = "secondary";
+    jump.textContent = `Geluidsmatch: ${match.name} · ${seconds(match.start)}–${seconds(match.end)}`;
+    jump.onclick = () => { $("video").currentTime = match.start; $("video").play().catch(error); };
+    $("ad-matches").append(jump);
+  }
   $("tracks").replaceChildren();
   $("segments").replaceChildren();
   for (const speaker of s.speakers) {
@@ -408,6 +432,16 @@ async function showResult(id, s) {
     check.checked = (data.mix?.excluded_fragments || []).includes(x.fragment);
     label.append(check, document.createTextNode("Radio / reclame"));
     selection.append(label);
+    const textClues = (data.processing?.ad_text?.candidates || []).filter(
+      (c) => c.start < x.end && c.end > x.start,
+    );
+    if (textClues.length) {
+      const clue = document.createElement("small");
+      const labels = [...new Set(textClues.flatMap((c) => c.matches.map((m) => m.label)))];
+      clue.textContent = ` Mogelijke reclame in omgeving: ${labels.join(', ')}. Beluister en bevestig zelf.`;
+      clue.title = textClues.map((c) => c.text).join('\n');
+      selection.append(clue);
+    }
     const overlap = (data.overlaps || []).some(
       (o) => o.start < x.end && o.end > x.start && o.method === "mixed",
     );
@@ -419,6 +453,7 @@ async function showResult(id, s) {
     tr.append(selection);
     $("segments").append(tr);
   }
+  $("result").hidden = false;
 }
 $("mix-button").onclick = async () => {
   try {
@@ -505,6 +540,43 @@ async function history() {
   }
 }
 system();
+async function adLibrary() {
+  const entries = await api('/api/ad-library');
+  $("ad-library").replaceChildren();
+  for (const entry of entries) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const name = document.createElement('span');
+    name.textContent = `${entry.name} · ${seconds(entry.duration)}`;
+    const remove = document.createElement('button');
+    remove.className = 'secondary';
+    remove.textContent = 'Voorbeeld verwijderen';
+    remove.onclick = async () => {
+      try { await api(`/api/ad-library/${entry.id}`, {method:'DELETE'}); await adLibrary(); }
+      catch(e) { error(e); }
+    };
+    row.append(name, remove);
+    $("ad-library").append(row);
+  }
+  $("ad-library-status").textContent = `${entries.length} lokale reclamevoorbeelden. Worden niet online gedeeld.`;
+  $("known-ads").disabled = entries.length === 0;
+  if (!adLibraryLoaded) $("known-ads").checked = entries.length > 0;
+  if (!entries.length) $("known-ads").checked = false;
+  adLibraryLoaded = true;
+}
+$("ad-add").onclick = async () => {
+  const file = $("ad-file").files[0];
+  if (!file) { error(new Error('Kies eerst een reclamevoorbeeld.')); return; }
+  $("ad-add").disabled = true;
+  try {
+    await api('/api/ad-library', {method:'POST', headers:{'Content-Type':'application/octet-stream', 'X-Filename':encodeURIComponent(file.name)}, body:file});
+    $("ad-file").value = '';
+    await adLibrary();
+    $("known-ads").checked = true;
+  } catch(e) { error(e); }
+  finally { $("ad-add").disabled = false; }
+};
+adLibrary().catch(error);
 history().catch(error);
 api('/api/storage').then(s => { $("storage-path").textContent = `Projecten worden bewaard in: ${s.projects_dir}`; }).catch(error);
 $("open-storage").onclick = async () => { try { await api('/api/storage/open', {method:'POST'}); } catch(e) { error(e); } };

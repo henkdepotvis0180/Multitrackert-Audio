@@ -194,3 +194,22 @@ def test_unknown_radio_fragment_is_rejected_before_starting_worker(tmp_path):
         )
         assert response.status_code == 422
         assert read_json(folder / "status.json")["state"] == "done"
+
+
+def test_reference_reduction_has_explicit_valid_mix_choices():
+    manifest = {
+        "media": {"duration": 4},
+        "tracks": [
+            {"id": "speaker_01", "enabled": True},
+            {"id": "radio", "enabled": False},
+        ],
+        "segments": [],
+        "processing": {"radio": {"method": "known_ad_waveform", "applied": True}},
+    }
+    configure_mix(manifest, "remove_radio", [])
+    assert not manifest["tracks"][1]["enabled"]
+    configure_mix(manifest, "keep_all", [])
+    assert manifest["tracks"][1]["enabled"]
+    for mode in ["remove_music", "remove_vocals"]:
+        with pytest.raises(ValueError, match="Kies Radio weglaten of Alles behouden"):
+            configure_mix(manifest, mode, [])

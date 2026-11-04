@@ -45,13 +45,41 @@ def diarize(audio, models, speakers, threads, progress):
     ids = {}
     segments = []
     for item in result:
-        ids.setdefault(item.speaker, len(ids) + 1)
         a, b = max(0.0, item.start), min(len(audio) / 16000, item.end)
         if b > a:
+            ids.setdefault(item.speaker, len(ids) + 1)
             segments.append(Segment(a, b, ids[item.speaker]))
-    if len(ids) > 12:
-        raise ValueError("Meer dan 12 sprekers gevonden. Stel het spreker-aantal expliciet in.")
     return segments
+
+
+def bound_voice_tracks(segments, limit=12):
+    """Keep bounded individual tracks; other voices remain in the audio residual.
+
+    This is an export/storage limit, not an assertion about who is radio or a person.
+    The original segments are recorded as metadata for the grouped voices.
+    """
+    durations = {}
+    for segment in segments:
+        durations[segment.speaker] = durations.get(segment.speaker, 0) + segment.end - segment.start
+    if len(durations) <= limit:
+        return segments, None
+    keep = set(sorted(durations, key=lambda s: (-durations[s], s))[:limit])
+    track_ids = {group: i for i, group in enumerate(sorted(keep), 1)}
+    return [Segment(s.start, s.end, track_ids[s.speaker]) for s in segments if s.speaker in keep], {
+        "detected_groups": len(durations),
+        "individual_tracks": limit,
+        "individual_source_groups": [
+            {"track": track, "source_group": group} for group, track in track_ids.items()
+        ],
+        "grouped_segments": [
+            {"start": s.start, "end": s.end, "group": s.speaker}
+            for s in segments
+            if s.speaker not in keep
+        ],
+        "note": "Meer dan 12 geschatte stemgroepen. De 12 groepen met de meeste spreektijd "
+        "hebben losse tracks; overige stemmen blijven in achtergrond/rest en kunnen "
+        "bij overlap ook in andere tracks zitten. Dit is geen herkenning van radio versus gesprek.",
+    }
 
 
 class Embedder:

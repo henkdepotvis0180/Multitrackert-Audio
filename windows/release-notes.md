@@ -1,15 +1,16 @@
-Windows 10/11 x64 CPU-installer. Download de `.exe` en voer die uit; Python, FFmpeg en de drie lokale modellen zijn inbegrepen. Na installatie opent de website op deze computer. Voor deze editie hoef je geen losse Python-pakketten of modelbestanden te installeren.
+Windows 10/11 x64 CPU-installer. Download de `.exe` en voer die uit. Python, FFmpeg, muziek-/stemmodellen en het optionele Whisper Small-tekstmodel zijn inbegrepen. De app verwerkt je opnames lokaal.
 
-Versie 0.4.0 maakt radiopraat, reclame en zang selecteerbaar per spreekfragment of hele spreker. Beluister een stemfragment, markeer de radiofragmenten en maak de gekozen mix. De selectie komt in `radio_voices.wav` op een aparte, standaard gedempte Premiere-track. De oorspronkelijke sprekertracks blijven bewaard; de nieuwe tijdlijn gebruikt aangepaste tracks voor de fragmentselectie. Je kunt de selectie wijzigen en de oorspronkelijke mix herstellen zonder nieuwe analyse. Radiostemmen apart zetten werkt ook zonder muziekscheiding.
+Nieuw in 0.5.0:
 
-Deze versie voegt handmatige precisie toe, geen automatische herkenning van radiopresentatoren. Bij gemengde overlap kan gesprek meekomen; de app toont dit bij het fragment. Beluister de radiostemtrack en de gekozen mix. Voor twee gelijktijdige stemmen blijft de bestaande optionele stemmenscheiding beschikbaar.
+- Lokale reclamebibliotheek: voeg één keer een schoon reclamefragment van 2–90 seconden toe. De app zoekt sterke geluidsmatches in de hele opname, ook bij herhaling, en schat die reclame op een aparte, standaard gedempte `radio.wav`-track. Het resultaat staat in `cleaned.wav`; origineel en restgeluid blijven bewaard.
+- Optionele Nederlandse tekstherkenning met korte herkenningszinnen van AH, Kruidvat en Lidl en eigen zinnen. Die geeft aanwijzingen bij fragmenten. Tekst alleen verwijdert geen audio: ook een gesprek kan een slogan noemen en gezongen reclames worden soms verkeerd verstaan.
+- Meer dan 12 geschatte stemgroepen veroorzaakt geen afgebroken analyse meer. De 12 groepen met de meeste spreektijd krijgen losse tracks; de rest blijft in achtergrond/rest. Tijden en uitleg staan in `reclame-analyse.json`.
+- De radioselectie per fragment en de Windows-statusreparaties uit 0.4 blijven aanwezig.
 
-Ook de reparatie uit 0.3.1 blijft aanwezig: deze verhelpt Windows-conflicten bij het bijwerken van `status.json` (`WinError 5`). Gelijktijdige schrijvers wachten op elkaar; statuslezers houden het bestand niet meer onnodig geblokkeerd. Tijdelijke blokkades worden kort opnieuw geprobeerd. Een geblokkeerde status van een oude opdracht verhindert geen nieuwe upload. Met **Download foutlog** kun je een lokale ZIP met diagnostiek opslaan, zonder je opnames.
+Dit is geen universele herkenning of gegarandeerde verwijdering van alle radioreclames. Geluidsvergelijking vereist voldoende overeenkomst met een toegevoegd voorbeeld; dezelfde stem met andere woorden is daarvoor geen match. Controleer altijd `radio.wav` en `cleaned.wav` op resten en eventuele spraaklekkage. Het eigen AH-voorbeeld uit de chatsessie wordt niet in de app verspreid.
 
-Updates vervangen de oude programmabestanden. Opnames, audio, MP4 en ZIP staan buiten de installatiemap en blijven ook bij de-installatie bewaard. Gebruik “Open lokale opslagmap” of “Open lokale uitvoermap” om ze terug te vinden na een afgebroken browserdownload.
+Bij een gecontroleerde mix van de aangeleverde AH-slogan met onafhankelijke echte testspraak en een korte echo zijn drie ingevoegde slogans gevonden. De fout ten opzichte van de schone testspraak daalde circa 25,7 dB. Dat is geen meting op jouw echte kamer-/gespreksopname. De kleine én grotere tekstherkenner misten de gezongen slogan; geluidsvergelijking is daarvoor de werkende route in deze test.
 
-De build controleert op native Windows: echte modellen, de bevroren app en subprocessen, MP4 → muziek-/sprekertracks → ZIP, een hervatbare download, installatie, opnieuw installeren en verwijderen met behoud van data. Dit is nog geen test op jouw eigen Windows-pc.
+Updates vervangen de programmabestanden. Opnames, reclamebibliotheek en exports staan buiten de installatiemap en blijven bewaard. Sluit de oude app voor installatie. De Windows-build controleert echte modellen, de verpakte app, reclamebibliotheek → geluidsmatch → aparte track → ZIP, installatie, bijwerken en gegevensbehoud.
 
-Dit is een niet digitaal ondertekende preview; Windows kan een onbekende uitgever tonen. De CPU-editie gebruikt geen CUDA. De broninstallatie met CUDA blijft beschikbaar. Perfecte radio-/zangisolatie is niet gegarandeerd.
-
-De `.sha256` hoort bij de installer. Het FFmpeg-broncodearchief bevat de exacte LGPL-broncode en het bouwscript voor de meegeleverde mediabinaries. Licenties van de app, modellen en dependencies worden meegeleverd.
+Deze CPU-preview is niet digitaal ondertekend. De `.sha256` hoort bij de installer; licenties en bijbehorende FFmpeg-broncode worden meegeleverd.

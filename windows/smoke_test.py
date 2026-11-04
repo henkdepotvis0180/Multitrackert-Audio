@@ -11,6 +11,9 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
+import numpy as np
+import soundfile as sf
+
 
 def main():
     exe = Path(sys.argv[1]).resolve()
@@ -29,6 +32,14 @@ def main():
         )
     ffmpeg = exe.parent / "_internal/ffmpeg/bin/ffmpeg.exe"
     source = root / "speech.mp4"
+    speech, rate = sf.read(".local-data/test-speech.wav", dtype="float32")
+    speech = speech[: rate * 4]
+    speech = speech / max(1e-7, float(np.sqrt(np.mean(speech * speech)))) * 0.02
+    reference = np.random.default_rng(47).normal(0, 0.08, rate * 2).astype("float32")
+    mixture = speech.copy()
+    mixture[rate // 2 : rate // 2 + len(reference)] += reference
+    sf.write(root / "reference.wav", reference, rate, subtype="FLOAT")
+    sf.write(root / "mixed-speech.wav", mixture, rate, subtype="FLOAT")
     subprocess.run(
         [
             str(ffmpeg),
@@ -41,7 +52,7 @@ def main():
             "-i",
             "color=s=160x90:r=25",
             "-i",
-            ".local-data/test-speech.wav",
+            str(root / "mixed-speech.wav"),
             "-t",
             "4",
             "-c:v",
@@ -67,8 +78,12 @@ def main():
                 else "video/mp4",
             },
         )
-        with opener.open(req, timeout=20) as response:
-            return response.read()
+        try:
+            with opener.open(req, timeout=20) as response:
+                return response.read()
+        except urllib.error.HTTPError as e:
+            e.add_note(f"{path}: {e.read().decode('utf-8', errors='replace')[:2000]}")
+            raise
 
     def wait_job(ident):
         deadline = time.monotonic() + 240
@@ -94,18 +109,26 @@ def main():
         system = json.loads(request("/api/system"))
         assert system["models_ready"] and system["music_ready"] and system["separation_ready"]
         assert system["installation"]["packaged"]
+        assert system["ad_text_ready"]
+        request("/api/ad-library", (root / "reference.wav").read_bytes())
         job = json.loads(
-            request("/api/jobs?speakers=1&music=true&separate=true", source.read_bytes())
+            request(
+                "/api/jobs?speakers=1&music=true&separate=true&known_ads=true&ad_text=true",
+                source.read_bytes(),
+            )
         )["id"]
         wait_job(job)
         timeline = json.loads(request("/api/jobs/" + job + "/timeline"))
         assert timeline["segments"], "Speech fixture must produce selectable fragments"
+        assert timeline["processing"]["ad_detection"]["applied"]
+        assert len(timeline["processing"]["ad_detection"]["matches"]) == 1
+        assert not timeline["processing"]["ad_text"]["automatic_removal"]
         fragment = timeline["segments"][0]["fragment"]
         for attempt in range(30):
             try:
                 request(
                     "/api/jobs/" + job + "/mix",
-                    json.dumps({"mode": "remove_vocals", "excluded_fragments": [fragment]}).encode(),
+                    json.dumps({"mode": "remove_radio", "excluded_fragments": [fragment]}).encode(),
                 )
                 break
             except urllib.error.HTTPError as e:
@@ -123,6 +146,7 @@ def main():
                 "cleaned.wav",
                 "removed.wav",
                 "radio_voices.wav",
+                "radio.wav",
             } <= set(z.namelist())
             manifest = json.loads(z.read("timeline.json"))
             assert manifest["mix"]["excluded_fragments"] == [fragment]
