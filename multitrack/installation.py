@@ -83,7 +83,7 @@ def installation_status(ffmpeg_ready, cuda_available=False):
         "update_note": (
             "Windows CPU-editie: Python, FFmpeg en de modellen zijn inbegrepen. Je hoeft geen losse dependencies te installeren."
             if getattr(sys, "frozen", False)
-            else "Versie 0.3 gebruikt voor de broninstallatie dezelfde dependencies en modellen als 0.2. Updates en uitvoerbestanden staan los van elkaar."
+            else "Versie 0.4 gebruikt dezelfde dependencies en modellen als 0.3. Bestaande analyses kun je opnieuw mixen met radioselectie per fragment."
         ),
         "checks": checks,
     }

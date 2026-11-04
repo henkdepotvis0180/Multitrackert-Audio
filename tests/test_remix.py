@@ -120,3 +120,77 @@ def test_mix_api_validation_does_not_damage_existing_export(tmp_path):
             == 422
         )
         assert read_json(folder / "status.json")["state"] == "done"
+
+
+@pytest.mark.parametrize("mode", ["remove_radio", "remove_vocals"])
+def test_radio_fragments_preserve_rest_and_have_a_separate_premiere_track(
+    tmp_path, mode, monkeypatch
+):
+    import multitrack.remix as module
+
+    # Exercise selection across multiple streaming blocks, including overlapping
+    # selections on the same speaker; samples must only be removed once.
+    monkeypatch.setattr(module, "BLOCK", 1800)
+    manifest = fixture(tmp_path)
+    manifest["segments"] = [
+        {"fragment": 1, "speaker": 2, "start": 0.2, "end": 0.55},
+        {"fragment": 2, "speaker": 2, "start": 0.45, "end": 0.75},
+        {"fragment": 3, "speaker": 2, "start": 0.8, "end": 0.95},
+    ]
+    atomic_json(tmp_path / "export/timeline.json", manifest)
+    original_stem, rate = sf.read(tmp_path / "export/speakers/speaker_02.wav", dtype="float32")
+    original, _ = sf.read(tmp_path / "export/original.wav", dtype="float32")
+    music, _ = sf.read(tmp_path / "export/music.wav", dtype="float32")
+    result = remix(tmp_path, mode, [], Progress(tmp_path), [1, 2])
+    radio, _ = sf.read(tmp_path / "export/radio_voices.wav", dtype="float32")
+    expected = np.zeros_like(original_stem)
+    expected[round(0.2 * rate) : round(0.75 * rate)] = original_stem[
+        round(0.2 * rate) : round(0.75 * rate)
+    ]
+    np.testing.assert_array_equal(radio, expected)
+    retained, _ = sf.read(tmp_path / "export/mix-speakers/speaker_02.wav", dtype="float32")
+    np.testing.assert_allclose(retained + radio, original_stem, atol=1e-7)
+    clean, _ = sf.read(tmp_path / "export/cleaned.wav", dtype="float32")
+    np.testing.assert_allclose(
+        clean, original - radio - (music if mode == "remove_radio" else 0), atol=1e-7
+    )
+    assert result["mix"]["excluded_fragments"] == [1, 2]
+    xml = ET.parse(tmp_path / "export/timeline.xml")
+    files = {i.findtext("file/pathurl"): i.findtext("enabled") for i in xml.findall(".//clipitem")}
+    assert files["mix-speakers/speaker_02.wav"] == "TRUE"
+    assert files["radio_voices.wav"] == "FALSE"
+    np.testing.assert_array_equal(
+        sf.read(tmp_path / "export/speakers/speaker_02.wav", dtype="float32")[0], original_stem
+    )
+    # A whole speaker selection plus the same fragment must not double the radio.
+    remix(tmp_path, "remove_vocals", [2], Progress(tmp_path), [1, 2])
+    np.testing.assert_array_equal(
+        sf.read(tmp_path / "export/radio_voices.wav", dtype="float32")[0], original_stem
+    )
+    remix(tmp_path, "keep_all", [], Progress(tmp_path))
+    np.testing.assert_allclose(
+        sf.read(tmp_path / "export/cleaned.wav", dtype="float32")[0], original, atol=1e-7
+    )
+
+
+def test_radio_speech_can_be_selected_without_a_music_model(tmp_path):
+    manifest = fixture(tmp_path)
+    manifest["tracks"] = [t for t in manifest["tracks"] if t["id"] != "music"]
+    known, muted = configure_mix(manifest, "remove_vocals", [2])
+    assert known == {1, 2} and muted == {2}
+    with pytest.raises(ValueError, match="Onbekend spreekfragment"):
+        configure_mix(manifest, "remove_vocals", [], [100])
+
+
+def test_unknown_radio_fragment_is_rejected_before_starting_worker(tmp_path):
+    ident = "a" * 32
+    folder = tmp_path / "jobs" / ident
+    fixture(folder)
+    with TestClient(create_app(tmp_path)) as client:
+        response = client.post(
+            f"/api/jobs/{ident}/mix",
+            headers={"X-Multitrack": "local"},
+            json={"mode": "remove_vocals", "excluded_fragments": [999]},
+        )
+        assert response.status_code == 422
+        assert read_json(folder / "status.json")["state"] == "done"

@@ -147,7 +147,7 @@ def render(
     return output, overlap
 
 
-def timeline_xml(output, info, speakers, extra_tracks=(), disabled_speakers=()):
+def timeline_xml(output, info, speakers, extra_tracks=(), disabled_speakers=(), speaker_files=None):
     """FCP7 interchange for Premiere. Editors may require relinking relative paths."""
     rate = Fraction(info["fps"]) if info["fps"] != "0/0" else Fraction(25)
     timebase = round(float(rate))
@@ -201,7 +201,7 @@ def timeline_xml(output, info, speakers, extra_tracks=(), disabled_speakers=()):
         clip(
             ET.SubElement(audio, "track"),
             f"Spreker {speaker}",
-            f"speakers/speaker_{speaker:02}.wav",
+            (speaker_files or {}).get(speaker, f"speakers/speaker_{speaker:02}.wav"),
             str(speaker),
             True,
             speaker not in disabled_speakers,

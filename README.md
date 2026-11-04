@@ -4,6 +4,35 @@ Lokale MP4-verwerking met een tijdlijn per spreker, behoud van achtergrondgeluid
 optionele muziekscheiding en een instelbare Premiere-export. **Opnames blijven op je
 computer.** Alleen de eenmalige installatie/modeldownload heeft internet nodig.
 
+## Nieuw in 0.4: radiopraat en reclame per fragment apart zetten
+
+De bronversie 0.4.0 voegt een gedetailleerde, handmatige radioselectie toe. De
+Windows-installer wordt pas gepubliceerd nadat de Windows-controles zijn geslaagd;
+de onderstaande 0.3.1-download bevat deze nieuwe bediening nog niet.
+
+1. Open een bestaande voltooide analyse of analyseer een nieuwe opname. Zet
+   **Muziek apart zetten** aan als ook de instrumentale muziek apart moet.
+2. Beluister **Stemfragment** bij een fragment. Vink **Radio / reclame** aan bij
+   de radiopresentator of reclamespot. Je kunt ook een hele radiospreker selecteren.
+3. Kies **Radiopraat, reclame en zang apart zetten (muziek behouden)**, of de
+   radiokeuze die ook instrumentale muziek weglaat. Maak de gekozen mix.
+4. Beluister `cleaned.wav` en **Geselecteerde radiostemmen en reclame**. Download
+   `radio_voices.wav` afzonderlijk of gebruik de nieuwe ZIP met `timeline.xml`.
+
+`radio_voices.wav` bevat alleen de gekozen delen van de beschikbare sprekertracks;
+`removed.wav` bevat alles wat de exportkeuze weglaat, inclusief eventuele muziek.
+Originele sprekertracks blijven behouden. `mix-speakers/` bevat aangepaste
+sprekertracks voor fragmentselecties; Premiere gebruikt deze automatisch via de
+nieuwe `timeline.xml`. De radiostemtrack staat standaard uit. Met **Alles behouden**
+kun je de oorspronkelijke mix terugmaken zonder opnieuw te analyseren.
+
+Dit is geen nieuw model dat automatisch beslist welke stem uit een radio komt.
+Muziekscheiding herkent dat onderscheid niet: ook reclame en radiopraat zijn spraak.
+Als een fragment nog gemengde overlap bevat, wordt dat bij de selectie vermeld;
+het selecteren kan dan ook een deel van het gesprek meenemen. Gebruik de optionele
+stemmenscheiding voor twee gelijktijdige stemmen en luister de losse tracks na.
+Gemiste radiostemmen in achtergrond/rest worden niet automatisch geselecteerd.
+
 ## Nieuw in 0.3: Windows-installer en lokale opslag
 
 **[Download Windows CPU-installer 0.3.1 (.exe, circa 851 MB)](https://github.com/henkdepotvis0180/Multitrackert-Audio/releases/download/v0.3.1/Multitrackert-Audio-Setup-0.3.1-CPU-x64.exe)**

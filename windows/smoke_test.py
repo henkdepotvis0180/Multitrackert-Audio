@@ -98,11 +98,14 @@ def main():
             request("/api/jobs?speakers=1&music=true&separate=true", source.read_bytes())
         )["id"]
         wait_job(job)
+        timeline = json.loads(request("/api/jobs/" + job + "/timeline"))
+        assert timeline["segments"], "Speech fixture must produce selectable fragments"
+        fragment = timeline["segments"][0]["fragment"]
         for attempt in range(30):
             try:
                 request(
                     "/api/jobs/" + job + "/mix",
-                    json.dumps({"mode": "keep_all", "excluded_speakers": []}).encode(),
+                    json.dumps({"mode": "remove_vocals", "excluded_fragments": [fragment]}).encode(),
                 )
                 break
             except urllib.error.HTTPError as e:
@@ -119,7 +122,12 @@ def main():
                 "music.wav",
                 "cleaned.wav",
                 "removed.wav",
+                "radio_voices.wav",
             } <= set(z.namelist())
+            manifest = json.loads(z.read("timeline.json"))
+            assert manifest["mix"]["excluded_fragments"] == [fragment]
+            assert manifest["mix_tracks"][0]["file"] == "radio_voices.wav"
+            assert "mix-speakers/" in z.read("timeline.xml").decode("utf-8")
             assert z.testzip() is None
         # Simulate an interrupted browser download and request a byte range again.
         req = urllib.request.Request(

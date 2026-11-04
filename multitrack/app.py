@@ -35,6 +35,7 @@ TERMINAL = {"done", "error", "cancelled", "interrupted"}
 class MixOptions(BaseModel):
     mode: Literal["keep_all", "remove_music", "remove_radio", "remove_vocals"] = "remove_radio"
     excluded_speakers: list[int] = Field(default_factory=list, max_length=12)
+    excluded_fragments: list[int] = Field(default_factory=list, max_length=50000)
 
 
 class Jobs:
@@ -377,6 +378,7 @@ def create_app(data=None):
                 read_json(folder / "export" / "timeline.json"),
                 options.mode,
                 options.excluded_speakers,
+                options.excluded_fragments,
             )
         except ValueError as e:
             raise HTTPException(422, str(e)) from e
@@ -459,7 +461,7 @@ def create_app(data=None):
             raise HTTPException(409, "Analyse is nog niet klaar.")
         if name == "input.mp4":
             return FileResponse(folder / name, media_type="video/mp4")
-        if name in {"background.wav", "music.wav", "radio.wav", "cleaned.wav", "removed.wav"}:
+        if name in {"background.wav", "music.wav", "radio.wav", "radio_voices.wav", "cleaned.wav", "removed.wav"}:
             path = folder / "export" / name
         elif re.fullmatch(r"speaker_\d{2}\.wav", name):
             path = folder / "export" / "speakers" / name
